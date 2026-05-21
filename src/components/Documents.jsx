@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Plus, ExternalLink, Trash2, Tag, Search, Languages, Database, ChevronDown, ChevronUp } from 'lucide-react'
 import { generateId, saveDoc, deleteDoc } from '../lib/storage'
-import { DEPARTMENTS, DOC_TYPES, THESIS_TAGS } from '../lib/archiveData'
+import { ARCHIVE_STRUCTURE, DOC_TYPES, THESIS_TAGS } from '../lib/archiveData'
 
 function DocCard({ doc, onDelete, onTranslate, onExtract }) {
   const [expanded, setExpanded] = useState(false)
@@ -22,7 +22,7 @@ function DocCard({ doc, onDelete, onTranslate, onExtract }) {
               <span key={t} className="text-xs px-2 py-0.5 rounded-full bg-stone-100 text-stone-600">{t}</span>
             ))}
             {doc.salt_klasor && (
-              <button onClick={() => window.open(doc.salt_klasor, '_blank')}
+              <button onClick={() => window.open(doc.salt_klasor.startsWith('http') ? doc.salt_klasor : '#', '_blank')}
                 className="text-xs px-2 py-0.5 rounded-full bg-stone-800 text-white hover:bg-stone-600">
                 SALT
               </button>
@@ -86,7 +86,7 @@ function DocCard({ doc, onDelete, onTranslate, onExtract }) {
 
 function AddDocForm({ onAdd, onCancel }) {
   const [form, setForm] = useState({
-    title: '', dept: DEPARTMENTS[0], type: DOC_TYPES[0],
+    title: '', dept: ARCHIVE_STRUCTURE[0].name, type: DOC_TYPES[0],
     date: '', url: '', tags: [], note: '',
   })
   const [tagInput, setTagInput] = useState('')
@@ -122,7 +122,7 @@ function AddDocForm({ onAdd, onCancel }) {
             <label className="block text-xs font-medium text-stone-500 mb-1">Departman</label>
             <select value={form.dept} onChange={e => set('dept', e.target.value)}
               className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg bg-white focus:outline-none focus:border-stone-400">
-              {DEPARTMENTS.map(d => <option key={d}>{d}</option>)}
+              {ARCHIVE_STRUCTURE.map(d => <option key={d.name}>{d.name}</option>)}
             </select>
           </div>
           <div>
@@ -189,6 +189,88 @@ function AddDocForm({ onAdd, onCancel }) {
   )
 }
 
+function DeptFilterPanel({ docs, deptFilter, setDeptFilter, klasorFilter, setKlasorFilter }) {
+  const [openDept, setOpenDept] = useState(null)
+
+  const deptCounts = useMemo(() => {
+    const counts = {}
+    docs.forEach(d => { counts[d.dept] = (counts[d.dept] || 0) + 1 })
+    return counts
+  }, [docs])
+
+  const klasorCounts = useMemo(() => {
+    const counts = {}
+    docs.forEach(d => { if (d.salt_klasor) counts[d.salt_klasor] = (counts[d.salt_klasor] || 0) + 1 })
+    return counts
+  }, [docs])
+
+  return (
+    <div className="w-52 flex-shrink-0">
+      <div className="bg-white border border-stone-200 rounded-xl overflow-hidden">
+        <button
+          onClick={() => { setDeptFilter(''); setKlasorFilter('') }}
+          className={`w-full text-left px-3 py-2.5 text-sm font-medium border-b border-stone-100 ${
+            !deptFilter && !klasorFilter ? 'bg-stone-100 text-stone-900' : 'text-stone-600 hover:bg-stone-50'
+          }`}
+        >
+          Tum belgeler
+          <span className="ml-1 text-xs text-stone-400">({docs.length})</span>
+        </button>
+
+        {ARCHIVE_STRUCTURE.map(dept => {
+          const count = deptCounts[dept.name] || 0
+          if (count === 0) return null
+          const isOpen = openDept === dept.name
+          const isActive = deptFilter === dept.name
+
+          const deptKlasorler = Object.keys(klasorCounts).filter(k =>
+            k.startsWith(dept.name)
+          )
+
+          return (
+            <div key={dept.name} className="border-b border-stone-100 last:border-0">
+              <div className="flex items-center">
+                <button
+                  onClick={() => { setDeptFilter(dept.name); setKlasorFilter('') }}
+                  className={`flex-1 text-left px-3 py-2 text-xs ${
+                    isActive ? 'font-medium text-stone-900 bg-stone-50' : 'text-stone-600 hover:bg-stone-50'
+                  }`}
+                >
+                  {dept.name}
+                  <span className="ml-1 text-stone-400">({count})</span>
+                </button>
+                {deptKlasorler.length > 0 && (
+                  <button
+                    onClick={() => setOpenDept(isOpen ? null : dept.name)}
+                    className="px-2 py-2 text-stone-400 hover:text-stone-600"
+                  >
+                    {isOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                  </button>
+                )}
+              </div>
+
+              {isOpen && deptKlasorler.map(k => (
+                <button
+                  key={k}
+                  onClick={() => { setKlasorFilter(k); setDeptFilter(dept.name) }}
+                  className={`w-full text-left px-4 py-1.5 text-xs border-t border-stone-50 ${
+                    klasorFilter === k ? 'bg-blue-50 text-blue-700 font-medium' : 'text-stone-500 hover:bg-stone-50'
+                  }`}
+                >
+                  <span className="block truncate">
+                    {k.split(' > ').slice(-1)[0]}
+                  </span>
+                  <span className="text-stone-400">({klasorCounts[k]})</span>
+                </button>
+              ))}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 export default function Documents({ docs, setDocs, onTranslate, onExtract }) {
   const [showForm, setShowForm] = useState(false)
   const [search, setSearch] = useState('')
@@ -197,7 +279,6 @@ export default function Documents({ docs, setDocs, onTranslate, onExtract }) {
   const [klasorFilter, setKlasorFilter] = useState('')
 
   const allTags = useMemo(() => [...new Set(docs.flatMap(d => d.tags || []))], [docs])
-  const allKlasorler = useMemo(() => [...new Set(docs.map(d => d.salt_klasor).filter(Boolean))], [docs])
 
   const filtered = useMemo(() => {
     return docs.filter(d => {
@@ -241,50 +322,46 @@ export default function Documents({ docs, setDocs, onTranslate, onExtract }) {
         </div>
       )}
 
-      <div className="flex gap-2 mb-4 flex-wrap">
-        <div className="relative flex-1 min-w-40">
+      <div className="mb-3 flex gap-2">
+        <div className="relative flex-1">
           <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-400" />
           <input type="text" value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Belgede ara..."
             className="w-full pl-7 pr-3 py-1.5 text-sm border border-stone-200 rounded-lg focus:outline-none focus:border-stone-400" />
         </div>
-        <select value={deptFilter} onChange={e => setDeptFilter(e.target.value)}
-          className="px-2.5 py-1.5 text-sm border border-stone-200 rounded-lg bg-white focus:outline-none">
-          <option value="">Tum departmanlar</option>
-          {DEPARTMENTS.map(d => <option key={d}>{d}</option>)}
-        </select>
         <select value={tagFilter} onChange={e => setTagFilter(e.target.value)}
           className="px-2.5 py-1.5 text-sm border border-stone-200 rounded-lg bg-white focus:outline-none">
           <option value="">Tum etiketler</option>
           {allTags.map(t => <option key={t}>{t}</option>)}
         </select>
-        {allKlasorler.length > 0 && (
-          <select value={klasorFilter} onChange={e => setKlasorFilter(e.target.value)}
-            className="px-2.5 py-1.5 text-sm border border-stone-200 rounded-lg bg-white focus:outline-none">
-            <option value="">Tum klasorler</option>
-            {allKlasorler.map(k => (
-  <option key={k} value={k}>{k}</option>
-))}
-          </select>
-        )}
       </div>
 
-      {filtered.length === 0 ? (
-        <div className="text-center py-16 text-stone-400">
-          <p className="text-sm">{docs.length === 0 ? 'Henuz belge eklenmedi.' : 'Sonuc bulunamadi.'}</p>
-          {docs.length === 0 && (
-            <button onClick={() => setShowForm(true)}
-              className="mt-3 text-sm text-blue-600 hover:underline">Ilk belgeyi ekle</button>
+      <div className="flex gap-4">
+        <DeptFilterPanel
+          docs={docs}
+          deptFilter={deptFilter}
+          setDeptFilter={setDeptFilter}
+          klasorFilter={klasorFilter}
+          setKlasorFilter={setKlasorFilter}
+        />
+
+        <div className="flex-1 space-y-3">
+          {filtered.length === 0 ? (
+            <div className="text-center py-16 text-stone-400">
+              <p className="text-sm">{docs.length === 0 ? 'Henuz belge eklenmedi.' : 'Sonuc bulunamadi.'}</p>
+              {docs.length === 0 && (
+                <button onClick={() => setShowForm(true)}
+                  className="mt-3 text-sm text-blue-600 hover:underline">Ilk belgeyi ekle</button>
+              )}
+            </div>
+          ) : (
+            filtered.map(doc => (
+              <DocCard key={doc.id} doc={doc} onDelete={handleDelete}
+                onTranslate={onTranslate} onExtract={onExtract} />
+            ))
           )}
         </div>
-      ) : (
-        <div className="space-y-3">
-          {filtered.map(doc => (
-            <DocCard key={doc.id} doc={doc} onDelete={handleDelete}
-              onTranslate={onTranslate} onExtract={onExtract} />
-          ))}
-        </div>
-      )}
+      </div>
     </div>
   )
 }
