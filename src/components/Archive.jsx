@@ -20,15 +20,6 @@ function DeptItem({ dept }) {
           {dept.children.length > 0 && (
             <span className="text-xs text-stone-400">{dept.children.length} alt koleksiyon</span>
           )}
-          
-            href={dept.url}
-            target="_blank"
-            rel="noreferrer"
-            onClick={e => e.stopPropagation()}
-            className="p-1 rounded hover:bg-stone-100 text-stone-400 hover:text-stone-600"
-          >
-            <ExternalLink size={13} />
-          </a>
           <ChevronRight size={14} className={`text-stone-400 transition-transform ${open ? 'rotate-90' : ''}`} />
         </div>
       </button>
