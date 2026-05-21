@@ -1,63 +1,23 @@
-import { useState } from 'react'
-import { Folder, FolderOpen, FileText, ExternalLink, ChevronRight } from 'lucide-react'
 import { ARCHIVE_STRUCTURE } from '../lib/archiveData'
 
 function DeptItem({ dept }) {
-  const [open, setOpen] = useState(false)
-
   return (
-    <div className="border border-stone-200 rounded-xl overflow-hidden">
-      <button
-        onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center gap-3 p-3.5 bg-white hover:bg-stone-50 text-left transition-colors"
-      >
-        {open
-          ? <FolderOpen size={16} className="text-amber-500 flex-shrink-0" />
-          : <Folder size={16} className="text-amber-500 flex-shrink-0" />
-        }
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-stone-800">{dept.name}</p>
-          {dept.description && (
-            <p className="text-xs text-stone-500 mt-0.5 truncate">{dept.description}</p>
-          )}
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {dept.children.length > 0 && (
-            <span className="text-xs text-stone-400">{dept.children.length} alt</span>
-          )}
-          <ChevronRight size={14} className={`text-stone-400 transition-transform ${open ? 'rotate-90' : ''}`} />
-        </div>
-      </button>
-
-      {open && dept.children.length > 0 && (
-        <div className="border-t border-stone-100 divide-y divide-stone-100">
+    <div style={{marginBottom:'8px', border:'1px solid #e7e5e4', borderRadius:'12px', overflow:'hidden'}}>
+      <div style={{padding:'14px 16px', background:'white'}}>
+        <p style={{fontSize:'14px', fontWeight:'500', marginBottom:'4px'}}>{dept.name}</p>
+        {dept.description && <p style={{fontSize:'12px', color:'#78716c'}}>{dept.description}</p>}
+        <a href={dept.url} target="_blank" rel="noreferrer" style={{fontSize:'12px', color:'#2563eb'}}>
+          SALT arsivinde ac
+        </a>
+      </div>
+      {dept.children.length > 0 && (
+        <div style={{borderTop:'1px solid #f5f5f4', background:'#fafaf9'}}>
           {dept.children.map(child => (
-            <div key={child.name} className="flex items-center gap-3 px-4 py-2.5 bg-stone-50">
-              <FileText size={13} className="text-stone-400 flex-shrink-0" />
-              <span className="text-sm text-stone-700 flex-1">{child.name}</span>
-              
-                href={child.url}
-                target="_blank"
-                rel="noreferrer"
-                className="text-xs text-blue-600 hover:underline flex-shrink-0"
-              >
-                Goster
-              </a>
+            <div key={child.name} style={{display:'flex', justifyContent:'space-between', padding:'8px 16px', borderBottom:'1px solid #f5f5f4'}}>
+              <span style={{fontSize:'13px', color:'#44403c'}}>{child.name}</span>
+              <a href={child.url} target="_blank" rel="noreferrer" style={{fontSize:'12px', color:'#2563eb'}}>ac</a>
             </div>
           ))}
-        </div>
-      )}
-
-      {open && dept.children.length === 0 && (
-        <div className="border-t border-stone-100 px-4 py-3 bg-stone-50">
-          
-            href={dept.url}
-            target="_blank"
-            rel="noreferrer"
-            className="text-xs text-blue-600 hover:underline"
-          >
-            Goruntule
-          </a>
         </div>
       )}
     </div>
@@ -67,25 +27,11 @@ function DeptItem({ dept }) {
 export default function Archive() {
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base font-medium text-stone-800">Arsiv Yapisi</h2>
-        
-          href="https://archives.saltresearch.org/handle/123456789/2302"
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 border border-stone-200 rounded-lg hover:bg-stone-50 text-stone-600"
-        >
-          <ExternalLink size={12} /> SALT
-        </a>
-      </div>
-      <p className="text-xs text-stone-500 mb-4">
-        Bank-i Osmani-i Sahane Arsivi — 7 departman, 10.000+ belge, 1856-2001
-      </p>
-      <div className="space-y-2">
-        {ARCHIVE_STRUCTURE.map(dept => (
-          <DeptItem key={dept.name} dept={dept} />
-        ))}
-      </div>
+      <h2 style={{fontSize:'15px', fontWeight:'500', marginBottom:'8px'}}>Arsiv Yapisi</h2>
+      <p style={{fontSize:'12px', color:'#78716c', marginBottom:'16px'}}>Bank-i Osmani Arsivi — 7 departman, 1856-2001</p>
+      {ARCHIVE_STRUCTURE.map(dept => (
+        <DeptItem key={dept.name} dept={dept} />
+      ))}
     </div>
   )
 }
