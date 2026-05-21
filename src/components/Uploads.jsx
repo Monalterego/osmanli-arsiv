@@ -1,59 +1,92 @@
 import { useState, useRef } from 'react'
-import { Loader, FileText, CheckCircle, AlertCircle } from 'lucide-react'
+import { Loader, FileText, CheckCircle, AlertCircle, X } from 'lucide-react'
 import { getApiKey } from '../lib/storage'
 import { analyzeDocument } from '../lib/claude'
 
 export default function Upload({ onDocumentAnalyzed }) {
-  const [loading, setLoading] = useState(false)
+  const [queue, setQueue] = useState([])
+  const [processing, setProcessing] = useState(false)
   const [error, setError] = useState('')
-  const [preview, setPreview] = useState(null)
-  const [result, setResult] = useState(null)
   const inputRef = useRef()
 
-  async function handleFile(file) {
-    if (!file) return
+  async function handleFiles(files) {
     const key = getApiKey()
     if (!key) { setError("Once Ayarlar'dan API anahtarini gir."); return }
-
     setError('')
-    setResult(null)
-    setLoading(true)
 
-    const reader = new FileReader()
-    reader.onload = async (e) => {
-      const dataUrl = e.target.result
-      const base64 = dataUrl.split(',')[1]
-      const mimeType = file.type
+    const newItems = Array.from(files).map(file => ({
+      file,
+      name: file.name,
+      status: 'bekliyor',
+      result: null,
+      preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
+    }))
 
-      if (file.type.startsWith('image/')) {
-        setPreview(dataUrl)
-      } else {
-        setPreview(null)
-      }
+    setQueue(prev => [...prev, ...newItems])
+  }
+
+  async function processQueue(currentQueue) {
+    const key = getApiKey()
+    setProcessing(true)
+
+    for (let i = 0; i < currentQueue.length; i++) {
+      if (currentQueue[i].status !== 'bekliyor') continue
+
+      setQueue(prev => prev.map((item, idx) =>
+        idx === i ? { ...item, status: 'isleniyor' } : item
+      ))
 
       try {
-        const analyzed = await analyzeDocument(key, base64, mimeType)
-        setResult(analyzed)
+        const base64 = await fileToBase64(currentQueue[i].file)
+        const mimeType = currentQueue[i].file.type
+        const result = await analyzeDocument(key, base64, mimeType)
+
+        setQueue(prev => prev.map((item, idx) =>
+          idx === i ? { ...item, status: 'tamam', result } : item
+        ))
       } catch (err) {
-        setError('Analiz hatasi: ' + err.message)
+        setQueue(prev => prev.map((item, idx) =>
+          idx === i ? { ...item, status: 'hata', error: err.message } : item
+        ))
       }
-      setLoading(false)
     }
-    reader.readAsDataURL(file)
+    setProcessing(false)
+  }
+
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = e => resolve(e.target.result.split(',')[1])
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
   }
 
   function handleDrop(e) {
     e.preventDefault()
-    const file = e.dataTransfer.files[0]
-    if (file) handleFile(file)
+    handleFiles(e.dataTransfer.files)
   }
 
-  function handleSave() {
-    if (!result) return
-    onDocumentAnalyzed(result)
-    setResult(null)
-    setPreview(null)
+  async function saveAll() {
+    const ready = queue.filter(item => item.status === 'tamam' && item.result)
+    for (const item of ready) {
+      await onDocumentAnalyzed(item.result)
+    }
+    setQueue([])
   }
+
+  async function saveOne(item) {
+    await onDocumentAnalyzed(item.result)
+    setQueue(prev => prev.filter(q => q !== item))
+  }
+
+  function removeOne(idx) {
+    setQueue(prev => prev.filter((_, i) => i !== idx))
+  }
+
+  const bekleyenler = queue.filter(q => q.status === 'bekliyor').length
+  const tamamlananlar = queue.filter(q => q.status === 'tamam').length
+  const hatalilar = queue.filter(q => q.status === 'hata').length
 
   return (
     <div>
@@ -70,25 +103,16 @@ export default function Upload({ onDocumentAnalyzed }) {
       >
         <FileText size={28} className="text-stone-300 mx-auto mb-3" />
         <p className="text-sm font-medium text-stone-600">PDF veya gorsel surukle, ya da tikla</p>
-        <p className="text-xs text-stone-400 mt-1">JPG, PNG, PDF desteklenir</p>
+        <p className="text-xs text-stone-400 mt-1">Coklu secim desteklenir — hepsini bir anda yukle</p>
         <input
           ref={inputRef}
           type="file"
           accept="image/*,.pdf"
+          multiple
           className="hidden"
-          onChange={e => handleFile(e.target.files[0])}
+          onChange={e => handleFiles(e.target.files)}
         />
       </div>
-
-      {loading && (
-        <div className="flex items-center gap-3 p-4 bg-purple-50 border border-purple-100 rounded-xl mb-4">
-          <Loader size={16} className="animate-spin text-purple-600" />
-          <div>
-            <p className="text-sm font-medium text-purple-800">Belge analiz ediliyor...</p>
-            <p className="text-xs text-purple-600">Metin okunuyor, ceviri yapiliyor, etiketler cikariliyor</p>
-          </div>
-        </div>
-      )}
 
       {error && (
         <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-100 rounded-xl text-xs text-red-700 mb-4">
@@ -96,97 +120,97 @@ export default function Upload({ onDocumentAnalyzed }) {
         </div>
       )}
 
-      {result && (
-        <div className="border border-stone-200 rounded-xl overflow-hidden mb-4">
-          <div className="flex items-center justify-between px-4 py-3 bg-emerald-50 border-b border-emerald-100">
-            <div className="flex items-center gap-2">
-              <CheckCircle size={15} className="text-emerald-600" />
-              <span className="text-sm font-medium text-emerald-800">Analiz tamamlandi</span>
+      {queue.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-stone-500">{queue.length} dosya</span>
+              {bekleyenler > 0 && <span className="text-xs px-2 py-0.5 bg-stone-100 text-stone-600 rounded-full">{bekleyenler} bekliyor</span>}
+              {tamamlananlar > 0 && <span className="text-xs px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full">{tamamlananlar} tamam</span>}
+              {hatalilar > 0 && <span className="text-xs px-2 py-0.5 bg-red-50 text-red-700 rounded-full">{hatalilar} hata</span>}
             </div>
-            <button
-              onClick={handleSave}
-              className="px-3 py-1.5 bg-stone-800 text-white text-xs rounded-lg hover:bg-stone-700"
-            >
-              Belgeye ekle ve kaydet
-            </button>
+            <div className="flex gap-2">
+              {bekleyenler > 0 && !processing && (
+                <button
+                  onClick={() => processQueue(queue)}
+                  className="px-3 py-1.5 bg-stone-800 text-white text-xs rounded-lg hover:bg-stone-700"
+                >
+                  {processing ? 'Isleniyor...' : `${bekleyenler} belgeyi analiz et`}
+                </button>
+              )}
+              {tamamlananlar > 0 && (
+                <button
+                  onClick={saveAll}
+                  className="px-3 py-1.5 bg-emerald-600 text-white text-xs rounded-lg hover:bg-emerald-700"
+                >
+                  Tumunu kaydet ({tamamlananlar})
+                </button>
+              )}
+            </div>
           </div>
 
-          <div className="p-4 space-y-3">
-            {preview && (
-              <img src={preview} alt="belge" className="w-full max-h-48 object-contain rounded-lg border border-stone-100 mb-2" />
-            )}
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <p className="text-xs text-stone-400 mb-0.5">Baslik</p>
-                <p className="text-sm font-medium text-stone-800">{result.title}</p>
-              </div>
-              <div>
-                <p className="text-xs text-stone-400 mb-0.5">Tarih</p>
-                <p className="text-sm text-stone-700">{result.date || '-'}</p>
-              </div>
-              <div>
-                <p className="text-xs text-stone-400 mb-0.5">Departman</p>
-                <p className="text-sm text-stone-700">{result.dept}</p>
-              </div>
-              <div>
-                <p className="text-xs text-stone-400 mb-0.5">Dil</p>
-                <p className="text-sm text-stone-700">{result.language || '-'}</p>
-              </div>
-            </div>
-
-            {result.tags?.length > 0 && (
-              <div>
-                <p className="text-xs text-stone-400 mb-1">Etiketler</p>
-                <div className="flex flex-wrap gap-1">
-                  {result.tags.map(t => (
-                    <span key={t} className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">{t}</span>
-                  ))}
+          <div className="space-y-2">
+            {queue.map((item, idx) => (
+              <div key={idx} className="bg-white border border-stone-200 rounded-xl overflow-hidden">
+                <div className="flex items-center gap-3 px-4 py-3">
+                  {item.preview && (
+                    <img src={item.preview} alt="" className="w-10 h-10 object-cover rounded-lg flex-shrink-0" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-stone-700 truncate">{item.name}</p>
+                    {item.result && (
+                      <p className="text-xs text-stone-400 truncate">{item.result.title}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {item.status === 'bekliyor' && (
+                      <span className="text-xs text-stone-400">Bekliyor</span>
+                    )}
+                    {item.status === 'isleniyor' && (
+                      <Loader size={14} className="animate-spin text-purple-500" />
+                    )}
+                    {item.status === 'tamam' && (
+                      <>
+                        <CheckCircle size={14} className="text-emerald-500" />
+                        <button
+                          onClick={() => saveOne(item)}
+                          className="text-xs px-2 py-1 bg-stone-800 text-white rounded-md hover:bg-stone-700"
+                        >
+                          Kaydet
+                        </button>
+                      </>
+                    )}
+                    {item.status === 'hata' && (
+                      <span className="text-xs text-red-500">Hata</span>
+                    )}
+                    <button onClick={() => removeOne(idx)} className="text-stone-300 hover:text-stone-500">
+                      <X size={14} />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
 
-            {result.summary_tr && (
-              <div>
-                <p className="text-xs text-stone-400 mb-1">Turkce ozet</p>
-                <p className="text-sm text-stone-700 leading-relaxed">{result.summary_tr}</p>
-              </div>
-            )}
-
-            {result.translation_tr && (
-              <div>
-                <p className="text-xs text-stone-400 mb-1">Ceviri</p>
-                <p className="text-sm text-stone-600 leading-relaxed bg-stone-50 p-3 rounded-lg">{result.translation_tr}</p>
-              </div>
-            )}
-
-            {result.key_entities && (
-              <div>
-                <p className="text-xs text-stone-400 mb-1.5">Anahtar varliklar</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {Object.entries(result.key_entities).map(([k, v]) => v?.length > 0 && (
-                    <div key={k} className="bg-stone-50 rounded-lg p-2">
-                      <p className="text-xs text-stone-400 capitalize mb-1">{k}</p>
-                      <p className="text-xs text-stone-700">{v.join(', ')}</p>
+                {item.status === 'tamam' && item.result && (
+                  <div className="border-t border-stone-100 px-4 py-3 bg-stone-50">
+                    <div className="flex flex-wrap gap-1.5">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">{item.result.dept}</span>
+                      {item.result.date && <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">{item.result.date}</span>}
+                      {item.result.tags?.slice(0, 4).map(t => (
+                        <span key={t} className="text-xs px-2 py-0.5 rounded-full bg-stone-100 text-stone-600">{t}</span>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                    {item.result.summary_tr && (
+                      <p className="text-xs text-stone-500 mt-2 line-clamp-2">{item.result.summary_tr}</p>
+                    )}
+                  </div>
+                )}
+
+                {item.status === 'hata' && (
+                  <div className="border-t border-red-100 px-4 py-2 bg-red-50">
+                    <p className="text-xs text-red-600">{item.error}</p>
+                  </div>
+                )}
               </div>
-            )}
-
-            {result.research_note && (
-  <div className="bg-amber-50 border border-amber-100 rounded-lg p-3">
-    <p className="text-xs font-medium text-amber-800 mb-1">Arastirma notu</p>
-    <p className="text-xs text-amber-700 leading-relaxed">{result.research_note}</p>
-  </div>
-)}
-
-{result.original_text && (
-  <div className="bg-stone-50 border border-stone-200 rounded-lg p-3">
-    <p className="text-xs font-medium text-stone-600 mb-1">Orijinal metin</p>
-    <p className="text-xs text-stone-600 leading-relaxed font-mono whitespace-pre-wrap">{result.original_text}</p>
-  </div>
-)}
+            ))}
           </div>
         </div>
       )}
