@@ -23,15 +23,35 @@ function DocCard({ doc, onDelete, onTranslate, onExtract }) {
             ))}
           </div>
           {doc.note && (
-            <div className="mt-2">
-              <p className={`text-xs text-stone-500 leading-relaxed ${!expanded && 'line-clamp-2'}`}>{doc.note}</p>
-              {doc.note.length > 120 && (
-                <button onClick={() => setExpanded(e => !e)} className="text-xs text-stone-400 hover:text-stone-600 flex items-center gap-0.5 mt-0.5">
-                  {expanded ? <><ChevronUp size={12} /> Kapat</> : <><ChevronDown size={12} /> Devamını gör</>}
-                </button>
-              )}
-            </div>
-          )}
+  <div className="mt-2 space-y-2">
+    {doc.note.split('\n\n').map((block, i) => {
+      const isOzet = block.startsWith('OZET:')
+      const isCeviri = block.startsWith('CEVIRI:')
+      const isNot = block.startsWith('ARASTIRMA NOTU:')
+      const isOrijinal = block.startsWith('ORIJINAL METIN:')
+      if (!expanded && i > 0) return null
+      return (
+        <div key={i} className={`text-xs rounded-lg p-2 ${
+          isOzet ? 'bg-blue-50 text-blue-800' :
+          isCeviri ? 'bg-stone-50 text-stone-700' :
+          isNot ? 'bg-amber-50 text-amber-800' :
+          isOrijinal ? 'bg-stone-100 text-stone-600 font-mono' :
+          'text-stone-500'
+        }`}>
+          <span className="font-medium block mb-0.5">
+            {isOzet ? 'Ozet' : isCeviri ? 'Ceviri' : isNot ? 'Arastirma notu' : isOrijinal ? 'Orijinal metin' : ''}
+          </span>
+          <span className="leading-relaxed">{block.replace(/^(OZET|CEVIRI|ARASTIRMA NOTU|ORIJINAL METIN):/, '').trim()}</span>
+        </div>
+      )
+    })}
+    {doc.note.split('\n\n').length > 1 && (
+      <button onClick={() => setExpanded(e => !e)} className="text-xs text-stone-400 hover:text-stone-600 flex items-center gap-0.5">
+        {expanded ? <><ChevronUp size={12} /> Kapat</> : <><ChevronDown size={12} /> Tamamini goster</>}
+      </button>
+    )}
+  </div>
+)}
           <div className="flex gap-2 mt-3 flex-wrap">
             {doc.url && (
               <a href={doc.url} target="_blank" rel="noreferrer"
