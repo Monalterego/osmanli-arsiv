@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Key, Eye, EyeOff, CheckCircle, ExternalLink } from 'lucide-react'
+import { Key, Eye, EyeOff, CheckCircle } from 'lucide-react'
 import { getApiKey, saveApiKey } from '../lib/storage'
 
 export default function Settings() {
@@ -17,7 +17,7 @@ export default function Settings() {
     <div className="max-w-lg">
       <h2 className="text-base font-medium text-stone-800 mb-1">Anthropic API Anahtarı</h2>
       <p className="text-sm text-stone-500 mb-6">
-        Çeviri ve veri çıkarımı için gereklidir. Anahtar yalnızca tarayıcınızda saklanır, hiçbir sunucuya gönderilmez.
+        Çeviri ve veri çıkarımı için gereklidir. Anahtar yalnızca tarayıcınızda saklanır.
       </p>
       <div className="mb-4">
         <label className="block text-xs font-medium text-stone-500 mb-1.5">API Key</label>
@@ -54,16 +54,6 @@ export default function Settings() {
           <li>API Keys → Create Key</li>
           <li>Anahtarı buraya yapıştır</li>
         </ol>
-        <p className="mt-2">
-          
-            href="https://console.anthropic.com"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1 text-amber-800 font-medium hover:underline"
-          >
-            console.anthropic.com <ExternalLink size={11} />
-          </a>
-        </p>
       </div>
       {key && (
         <div className="mt-4 flex items-center gap-2 text-xs text-emerald-700">
