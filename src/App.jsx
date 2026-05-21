@@ -5,7 +5,7 @@ import Translate from './components/Translate'
 import Extract from './components/Extract'
 import Archive from './components/Archive'
 import Settings from './components/Settings'
-import Upload from './components/Upload'
+import Upload from './components/Uploads'
 import { getDocs, saveDocs, generateId } from './lib/storage'
 
 const NAV = [
