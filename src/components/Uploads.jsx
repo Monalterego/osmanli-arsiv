@@ -1,13 +1,27 @@
 import { useState, useRef } from 'react'
-import { Loader, FileText, CheckCircle, AlertCircle, X } from 'lucide-react'
+import { Loader, FileText, CheckCircle, AlertCircle, X, Link } from 'lucide-react'
 import { getApiKey } from '../lib/storage'
 import { analyzeDocument } from '../lib/claude'
 
 export default function Upload({ onDocumentAnalyzed }) {
+  const [saltUrl, setSaltUrl] = useState('')
+  const [saltMeta, setSaltMeta] = useState(null)
   const [queue, setQueue] = useState([])
   const [processing, setProcessing] = useState(false)
   const [error, setError] = useState('')
   const inputRef = useRef()
+
+  function parseSaltUrl(url) {
+    if (!url.includes('archives.saltresearch.org/handle/')) return null
+    return { url, handle: url.split('/handle/')[1] }
+  }
+
+  function handleUrlSubmit() {
+    const meta = parseSaltUrl(saltUrl.trim())
+    if (!meta) { setError('Gecerli bir SALT URL girin.'); return }
+    setError('')
+    setSaltMeta(meta)
+  }
 
   async function handleFiles(files) {
     const key = getApiKey()
@@ -25,6 +39,15 @@ export default function Upload({ onDocumentAnalyzed }) {
     setQueue(prev => [...prev, ...newItems])
   }
 
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = e => resolve(e.target.result.split(',')[1])
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+  }
+
   async function processQueue(currentQueue) {
     const key = getApiKey()
     setProcessing(true)
@@ -39,7 +62,10 @@ export default function Upload({ onDocumentAnalyzed }) {
       try {
         const base64 = await fileToBase64(currentQueue[i].file)
         const mimeType = currentQueue[i].file.type
-        const result = await analyzeDocument(key, base64, mimeType)
+        const context = saltMeta
+          ? `Bu belge SALT Research arsivinde su klasorden alinmistir: ${saltMeta.url}`
+          : ''
+        const result = await analyzeDocument(key, base64, mimeType, context)
 
         setQueue(prev => prev.map((item, idx) =>
           idx === i ? { ...item, status: 'tamam', result } : item
@@ -53,15 +79,6 @@ export default function Upload({ onDocumentAnalyzed }) {
     setProcessing(false)
   }
 
-  function fileToBase64(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = e => resolve(e.target.result.split(',')[1])
-      reader.onerror = reject
-      reader.readAsDataURL(file)
-    })
-  }
-
   function handleDrop(e) {
     e.preventDefault()
     handleFiles(e.dataTransfer.files)
@@ -70,13 +87,13 @@ export default function Upload({ onDocumentAnalyzed }) {
   async function saveAll() {
     const ready = queue.filter(item => item.status === 'tamam' && item.result)
     for (const item of ready) {
-      await onDocumentAnalyzed(item.result)
+      await onDocumentAnalyzed(item.result, saltMeta?.url)
     }
     setQueue([])
   }
 
   async function saveOne(item) {
-    await onDocumentAnalyzed(item.result)
+    await onDocumentAnalyzed(item.result, saltMeta?.url)
     setQueue(prev => prev.filter(q => q !== item))
   }
 
@@ -95,6 +112,47 @@ export default function Upload({ onDocumentAnalyzed }) {
         <span className="text-xs px-2 py-0.5 bg-purple-50 text-purple-600 rounded-full font-medium">AI</span>
       </div>
 
+      {/* SALT URL girisi */}
+      <div className="bg-white border border-stone-200 rounded-xl p-4 mb-4">
+        <label className="block text-xs font-medium text-stone-500 mb-2">
+          SALT Klasor URL (opsiyonel ama onerilen)
+        </label>
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Link size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-400" />
+            <input
+              type="text"
+              value={saltUrl}
+              onChange={e => setSaltUrl(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleUrlSubmit()}
+              placeholder="https://archives.saltresearch.org/handle/123456789/2410"
+              className="w-full pl-7 pr-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none focus:border-stone-400"
+            />
+          </div>
+          <button
+            onClick={handleUrlSubmit}
+            className="px-3 py-2 bg-stone-800 text-white text-sm rounded-lg hover:bg-stone-700"
+          >
+            Ayarla
+          </button>
+        </div>
+        {saltMeta && (
+          <div className="mt-2 flex items-center gap-2 text-xs text-emerald-700">
+            <CheckCircle size={12} />
+            Klasor ayarlandi: {saltMeta.url}
+            <button onClick={() => { setSaltMeta(null); setSaltUrl('') }} className="text-stone-400 hover:text-stone-600 ml-1">
+              <X size={12} />
+            </button>
+          </div>
+        )}
+        {!saltMeta && (
+          <p className="text-xs text-stone-400 mt-1.5">
+            SALT URL girilirse AI belgeleri dogru bolum ve baglamda analiz eder.
+          </p>
+        )}
+      </div>
+
+      {/* Dosya yukle alani */}
       <div
         onDrop={handleDrop}
         onDragOver={e => e.preventDefault()}
@@ -103,7 +161,7 @@ export default function Upload({ onDocumentAnalyzed }) {
       >
         <FileText size={28} className="text-stone-300 mx-auto mb-3" />
         <p className="text-sm font-medium text-stone-600">PDF veya gorsel surukle, ya da tikla</p>
-        <p className="text-xs text-stone-400 mt-1">Coklu secim desteklenir — hepsini bir anda yukle</p>
+        <p className="text-xs text-stone-400 mt-1">Coklu secim desteklenir</p>
         <input
           ref={inputRef}
           type="file"
@@ -135,10 +193,15 @@ export default function Upload({ onDocumentAnalyzed }) {
                   onClick={() => processQueue(queue)}
                   className="px-3 py-1.5 bg-stone-800 text-white text-xs rounded-lg hover:bg-stone-700"
                 >
-                  {processing ? 'Isleniyor...' : `${bekleyenler} belgeyi analiz et`}
+                  {bekleyenler} belgeyi analiz et
                 </button>
               )}
-              {tamamlananlar > 0 && (
+              {processing && (
+                <div className="flex items-center gap-2 text-xs text-purple-600">
+                  <Loader size={13} className="animate-spin" /> Analiz ediliyor...
+                </div>
+              )}
+              {tamamlananlar > 0 && !processing && (
                 <button
                   onClick={saveAll}
                   className="px-3 py-1.5 bg-emerald-600 text-white text-xs rounded-lg hover:bg-emerald-700"
@@ -163,12 +226,8 @@ export default function Upload({ onDocumentAnalyzed }) {
                     )}
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    {item.status === 'bekliyor' && (
-                      <span className="text-xs text-stone-400">Bekliyor</span>
-                    )}
-                    {item.status === 'isleniyor' && (
-                      <Loader size={14} className="animate-spin text-purple-500" />
-                    )}
+                    {item.status === 'bekliyor' && <span className="text-xs text-stone-400">Bekliyor</span>}
+                    {item.status === 'isleniyor' && <Loader size={14} className="animate-spin text-purple-500" />}
                     {item.status === 'tamam' && (
                       <>
                         <CheckCircle size={14} className="text-emerald-500" />
@@ -180,9 +239,7 @@ export default function Upload({ onDocumentAnalyzed }) {
                         </button>
                       </>
                     )}
-                    {item.status === 'hata' && (
-                      <span className="text-xs text-red-500">Hata</span>
-                    )}
+                    {item.status === 'hata' && <span className="text-xs text-red-500">Hata</span>}
                     <button onClick={() => removeOne(idx)} className="text-stone-300 hover:text-stone-500">
                       <X size={14} />
                     </button>

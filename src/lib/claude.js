@@ -24,7 +24,7 @@ export async function callClaude(apiKey, systemPrompt, userMessage) {
   return data.content[0].text
 }
 
-export async function analyzeDocument(apiKey, base64Data, mimeType) {
+export async function analyzeDocument(apiKey, base64Data, mimeType, context = '') {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -36,7 +36,8 @@ export async function analyzeDocument(apiKey, base64Data, mimeType) {
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 3000,
-      system: `Sen Osmanli Bankasi arsiv belgelerini analiz eden bir tarih arastirmacisin. 
+      system: `Sen Osmanli Bankasi arsiv belgelerini analiz eden bir tarih arastirmacisin.
+      ${context ? `Belgenin alindig klasor: ${context}` : ''} 
 Belgeyi inceleyip asagidaki JSON formatinda yanit ver. SADECE JSON yaz, baska hicbir sey yazma:
 {
   "title": "belge basligi veya tahmini baslik",

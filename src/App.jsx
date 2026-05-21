@@ -41,14 +41,14 @@ export default function App() {
     setTab('veri')
   }
 
-  async function handleDocumentAnalyzed(result) {
+  async function handleDocumentAnalyzed(result, saltUrl = '') {
     const doc = {
       id: generateId(),
       title: result.title || 'Isimsiz belge',
       dept: result.dept || 'Operation Department',
       type: result.type || 'Dosya / File',
       date: result.date || '',
-      url: '',
+      url: saltUrl || '',
       tags: result.tags || [],
       note: [
         result.summary_tr ? `OZET: ${result.summary_tr}` : '',
