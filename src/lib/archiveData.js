@@ -40,7 +40,14 @@ export const ARCHIVE_STRUCTURE = [
           { name: 'V. Mehmed Resad (1327-1336)', url: 'https://archives.saltresearch.org/handle/123456789/2403' },
         ],
       },
-      { name: 'Banknotlarin tedavule cikmasi ve geri odenmesiyle ilgili yazisma', url: 'https://archives.saltresearch.org/handle/123456789/2410', children: [] },
+      { 
+  name: 'Banknotlarin tedavule cikmasi ve geri odenmesiyle ilgili yazisma', 
+  url: 'https://archives.saltresearch.org/handle/123456789/2410', 
+  children: [
+    { name: 'Inspection Ihsan Tezel sur banknotes. Application de la convention. Questions diverses', url: 'https://archives.saltresearch.org/handle/123456789/2411' },
+    { name: 'Coupures de journaux et correspondence sur le papier - monnaie', url: 'https://archives.saltresearch.org/handle/123456789/141278' },
+  ]
+},
       { name: 'Banknot numaralama ve hareket defterleri', url: 'https://archives.saltresearch.org/handle/123456789/2409', children: [] },
       {
         name: 'Devlet tarafindan basilan paralar',
