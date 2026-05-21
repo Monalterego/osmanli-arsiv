@@ -1,26 +1,49 @@
-const KEYS = {
-  DOCS: 'ob_docs',
-  API_KEY: 'ob_api_key',
+const SUPABASE_URL = 'https://ewvigvfstcraybwnhlqv.supabase.co'
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV3dmlndmZzdGNyYXlid25obHF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNTM4NDAsImV4cCI6MjA5NDkyOTg0MH0.DU8pZ0IRMTnSQKkfpQdYDWD8qVN7ERX_46PNO-KbC38'
+
+const HEADERS = {
+  'Content-Type': 'application/json',
+  'apikey': SUPABASE_KEY,
+  'Authorization': `Bearer ${SUPABASE_KEY}`,
 }
 
-export function getDocs() {
-  try {
-    return JSON.parse(localStorage.getItem(KEYS.DOCS) || '[]')
-  } catch {
-    return []
-  }
+export async function getDocs() {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/belgeler?order=created_at.desc`, {
+    headers: HEADERS,
+  })
+  if (!res.ok) return []
+  return await res.json()
 }
 
-export function saveDocs(docs) {
-  localStorage.setItem(KEYS.DOCS, JSON.stringify(docs))
+export async function saveDoc(doc) {
+  await fetch(`${SUPABASE_URL}/rest/v1/belgeler`, {
+    method: 'POST',
+    headers: { ...HEADERS, 'Prefer': 'resolution=merge-duplicates' },
+    body: JSON.stringify(doc),
+  })
+}
+
+export async function deleteDoc(id) {
+  await fetch(`${SUPABASE_URL}/rest/v1/belgeler?id=eq.${id}`, {
+    method: 'DELETE',
+    headers: HEADERS,
+  })
+}
+
+export async function updateDoc(doc) {
+  await fetch(`${SUPABASE_URL}/rest/v1/belgeler?id=eq.${doc.id}`, {
+    method: 'PATCH',
+    headers: HEADERS,
+    body: JSON.stringify(doc),
+  })
 }
 
 export function getApiKey() {
-  return localStorage.getItem(KEYS.API_KEY) || ''
+  return localStorage.getItem('ob_api_key') || ''
 }
 
 export function saveApiKey(key) {
-  localStorage.setItem(KEYS.API_KEY, key)
+  localStorage.setItem('ob_api_key', key)
 }
 
 export function generateId() {

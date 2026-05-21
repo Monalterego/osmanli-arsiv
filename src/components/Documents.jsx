@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { Plus, ExternalLink, Trash2, Tag, Search, Languages, Database, ChevronDown, ChevronUp } from 'lucide-react'
-import { generateId, saveDocs } from '../lib/storage'
+import { generateId, saveDoc, deleteDoc } from '../lib/storage'
 import { DEPARTMENTS, DOC_TYPES, THESIS_TAGS } from '../lib/archiveData'
 
 function DocCard({ doc, onDelete, onTranslate, onExtract }) {
@@ -23,49 +23,49 @@ function DocCard({ doc, onDelete, onTranslate, onExtract }) {
             ))}
           </div>
           {doc.note && (
-  <div className="mt-2 space-y-2">
-    {doc.note.split('\n\n').map((block, i) => {
-      const isOzet = block.startsWith('OZET:')
-      const isCeviri = block.startsWith('CEVIRI:')
-      const isNot = block.startsWith('ARASTIRMA NOTU:')
-      const isOrijinal = block.startsWith('ORIJINAL METIN:')
-      if (!expanded && i > 0) return null
-      return (
-        <div key={i} className={`text-xs rounded-lg p-2 ${
-          isOzet ? 'bg-blue-50 text-blue-800' :
-          isCeviri ? 'bg-stone-50 text-stone-700' :
-          isNot ? 'bg-amber-50 text-amber-800' :
-          isOrijinal ? 'bg-stone-100 text-stone-600 font-mono' :
-          'text-stone-500'
-        }`}>
-          <span className="font-medium block mb-0.5">
-            {isOzet ? 'Ozet' : isCeviri ? 'Ceviri' : isNot ? 'Arastirma notu' : isOrijinal ? 'Orijinal metin' : ''}
-          </span>
-          <span className="leading-relaxed">{block.replace(/^(OZET|CEVIRI|ARASTIRMA NOTU|ORIJINAL METIN):/, '').trim()}</span>
-        </div>
-      )
-    })}
-    {doc.note.split('\n\n').length > 1 && (
-      <button onClick={() => setExpanded(e => !e)} className="text-xs text-stone-400 hover:text-stone-600 flex items-center gap-0.5">
-        {expanded ? <><ChevronUp size={12} /> Kapat</> : <><ChevronDown size={12} /> Tamamini goster</>}
-      </button>
-    )}
-  </div>
-)}
+            <div className="mt-2 space-y-2">
+              {doc.note.split('\n\n').map((block, i) => {
+                const isOzet = block.startsWith('OZET:')
+                const isCeviri = block.startsWith('CEVIRI:')
+                const isNot = block.startsWith('ARASTIRMA NOTU:')
+                const isOrijinal = block.startsWith('ORIJINAL METIN:')
+                if (!expanded && i > 0) return null
+                return (
+                  <div key={i} className={`text-xs rounded-lg p-2 ${
+                    isOzet ? 'bg-blue-50 text-blue-800' :
+                    isCeviri ? 'bg-stone-50 text-stone-700' :
+                    isNot ? 'bg-amber-50 text-amber-800' :
+                    isOrijinal ? 'bg-stone-100 text-stone-600 font-mono' :
+                    'text-stone-500'
+                  }`}>
+                    <span className="font-medium block mb-0.5">
+                      {isOzet ? 'Ozet' : isCeviri ? 'Ceviri' : isNot ? 'Arastirma notu' : isOrijinal ? 'Orijinal metin' : ''}
+                    </span>
+                    <span className="leading-relaxed">{block.replace(/^(OZET|CEVIRI|ARASTIRMA NOTU|ORIJINAL METIN):/, '').trim()}</span>
+                  </div>
+                )
+              })}
+              {doc.note.split('\n\n').length > 1 && (
+                <button onClick={() => setExpanded(e => !e)} className="text-xs text-stone-400 hover:text-stone-600 flex items-center gap-0.5">
+                  {expanded ? <><ChevronUp size={12} /> Kapat</> : <><ChevronDown size={12} /> Tamamini goster</>}
+                </button>
+              )}
+            </div>
+          )}
           <div className="flex gap-2 mt-3 flex-wrap">
             {doc.url && (
-              <a href={doc.url} target="_blank" rel="noreferrer"
+              <button onClick={() => window.open(doc.url, '_blank')}
                 className="inline-flex items-center gap-1 text-xs px-2.5 py-1 border border-stone-200 rounded-md hover:bg-stone-50 text-stone-600">
-                <ExternalLink size={11} /> SALT'ta aç
-              </a>
+                <ExternalLink size={11} /> SALT
+              </button>
             )}
             <button onClick={() => onTranslate(doc)}
               className="inline-flex items-center gap-1 text-xs px-2.5 py-1 border border-stone-200 rounded-md hover:bg-stone-50 text-stone-600">
-              <Languages size={11} /> Çevir
+              <Languages size={11} /> Cevir
             </button>
             <button onClick={() => onExtract(doc)}
               className="inline-flex items-center gap-1 text-xs px-2.5 py-1 border border-stone-200 rounded-md hover:bg-stone-50 text-stone-600">
-              <Database size={11} /> Veri çıkar
+              <Database size={11} /> Veri cikar
             </button>
             <button onClick={() => onDelete(doc.id)}
               className="inline-flex items-center gap-1 text-xs px-2.5 py-1 border border-red-100 rounded-md hover:bg-red-50 text-red-500 ml-auto">
@@ -97,7 +97,7 @@ function AddDocForm({ onAdd, onCancel }) {
   }
 
   function handleSubmit() {
-    if (!form.title.trim()) return alert('Başlık zorunludur.')
+    if (!form.title.trim()) return alert('Baslik zorunludur.')
     onAdd({ ...form, id: generateId() })
   }
 
@@ -106,9 +106,9 @@ function AddDocForm({ onAdd, onCancel }) {
       <h3 className="text-sm font-medium text-stone-800 mb-4">Yeni Belge Ekle</h3>
       <div className="space-y-4">
         <div>
-          <label className="block text-xs font-medium text-stone-500 mb-1">Belge başlığı *</label>
+          <label className="block text-xs font-medium text-stone-500 mb-1">Belge basligi *</label>
           <input type="text" value={form.title} onChange={e => set('title', e.target.value)}
-            placeholder="örn. Lettre concernant les opérations de change, 1887"
+            placeholder="ornek: Lettre concernant les operations de change, 1887"
             className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none focus:border-stone-400" />
         </div>
         <div className="grid grid-cols-2 gap-3">
@@ -120,7 +120,7 @@ function AddDocForm({ onAdd, onCancel }) {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-stone-500 mb-1">Belge türü</label>
+            <label className="block text-xs font-medium text-stone-500 mb-1">Belge turu</label>
             <select value={form.type} onChange={e => set('type', e.target.value)}
               className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg bg-white focus:outline-none focus:border-stone-400">
               {DOC_TYPES.map(t => <option key={t}>{t}</option>)}
@@ -131,7 +131,7 @@ function AddDocForm({ onAdd, onCancel }) {
           <div>
             <label className="block text-xs font-medium text-stone-500 mb-1">Tarih</label>
             <input type="text" value={form.date} onChange={e => set('date', e.target.value)}
-              placeholder="örn. 1887-03 veya 1887"
+              placeholder="ornek: 1887-03 veya 1887"
               className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none focus:border-stone-400" />
           </div>
           <div>
@@ -156,16 +156,16 @@ function AddDocForm({ onAdd, onCancel }) {
           <div className="flex gap-2">
             <input type="text" value={tagInput} onChange={e => setTagInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && addCustomTag()}
-              placeholder="Özel etiket ekle..."
+              placeholder="Ozel etiket ekle..."
               className="flex-1 px-3 py-1.5 text-xs border border-stone-200 rounded-lg focus:outline-none focus:border-stone-400" />
             <button onClick={addCustomTag}
               className="px-3 py-1.5 text-xs border border-stone-200 rounded-lg hover:bg-stone-50">Ekle</button>
           </div>
         </div>
         <div>
-          <label className="block text-xs font-medium text-stone-500 mb-1">Araştırma notu</label>
+          <label className="block text-xs font-medium text-stone-500 mb-1">Arastirma notu</label>
           <textarea value={form.note} onChange={e => set('note', e.target.value)}
-            rows={3} placeholder="Tez konusuyla bağlantısı, dikkat çeken noktalar, sonraki adımlar..."
+            rows={3} placeholder="Tez konusuyla baglantisi, dikkat ceken noktalar..."
             className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none focus:border-stone-400 resize-none" />
         </div>
         <div className="flex gap-2 pt-1">
@@ -175,7 +175,7 @@ function AddDocForm({ onAdd, onCancel }) {
           </button>
           <button onClick={onCancel}
             className="px-4 py-2 border border-stone-200 text-stone-600 text-sm rounded-lg hover:bg-stone-50">
-            İptal
+            Iptal
           </button>
         </div>
       </div>
@@ -201,18 +201,16 @@ export default function Documents({ docs, setDocs, onTranslate, onExtract }) {
     })
   }, [docs, search, deptFilter, tagFilter])
 
-  function addDoc(doc) {
-    const updated = [doc, ...docs]
-    setDocs(updated)
-    saveDocs(updated)
+  async function addDoc(doc) {
+    await saveDoc(doc)
+    setDocs(prev => [doc, ...prev])
     setShowForm(false)
   }
 
-  function deleteDoc(id) {
+  async function handleDelete(id) {
     if (!confirm('Bu belge silinsin mi?')) return
-    const updated = docs.filter(d => d.id !== id)
-    setDocs(updated)
-    saveDocs(updated)
+    await deleteDoc(id)
+    setDocs(prev => prev.filter(d => d.id !== id))
   }
 
   return (
@@ -243,28 +241,28 @@ export default function Documents({ docs, setDocs, onTranslate, onExtract }) {
         </div>
         <select value={deptFilter} onChange={e => setDeptFilter(e.target.value)}
           className="px-2.5 py-1.5 text-sm border border-stone-200 rounded-lg bg-white focus:outline-none">
-          <option value="">Tüm departmanlar</option>
+          <option value="">Tum departmanlar</option>
           {DEPARTMENTS.map(d => <option key={d}>{d}</option>)}
         </select>
         <select value={tagFilter} onChange={e => setTagFilter(e.target.value)}
           className="px-2.5 py-1.5 text-sm border border-stone-200 rounded-lg bg-white focus:outline-none">
-          <option value="">Tüm etiketler</option>
+          <option value="">Tum etiketler</option>
           {allTags.map(t => <option key={t}>{t}</option>)}
         </select>
       </div>
 
       {filtered.length === 0 ? (
         <div className="text-center py-16 text-stone-400">
-          <p className="text-sm">{docs.length === 0 ? 'Henüz belge eklenmedi.' : 'Sonuç bulunamadı.'}</p>
+          <p className="text-sm">{docs.length === 0 ? 'Henuz belge eklenmedi.' : 'Sonuc bulunamadi.'}</p>
           {docs.length === 0 && (
             <button onClick={() => setShowForm(true)}
-              className="mt-3 text-sm text-blue-600 hover:underline">İlk belgeyi ekle →</button>
+              className="mt-3 text-sm text-blue-600 hover:underline">Ilk belgeyi ekle</button>
           )}
         </div>
       ) : (
         <div className="space-y-3">
           {filtered.map(doc => (
-            <DocCard key={doc.id} doc={doc} onDelete={deleteDoc}
+            <DocCard key={doc.id} doc={doc} onDelete={handleDelete}
               onTranslate={onTranslate} onExtract={onExtract} />
           ))}
         </div>

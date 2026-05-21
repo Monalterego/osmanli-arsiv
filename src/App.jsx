@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { BookOpen, FileText, Languages, Database, FolderOpen, Settings as SettingsIcon, Upload as UploadIcon } from 'lucide-react'
 import Documents from './components/Documents'
 import Translate from './components/Translate'
@@ -6,7 +6,7 @@ import Extract from './components/Extract'
 import Archive from './components/Archive'
 import Settings from './components/Settings'
 import Upload from './components/Uploads'
-import { getDocs, saveDocs, generateId } from './lib/storage'
+import { getDocs, saveDoc, generateId } from './lib/storage'
 
 const NAV = [
   { id: 'yukle', label: 'Belge Yukle', icon: UploadIcon },
@@ -19,9 +19,17 @@ const NAV = [
 
 export default function App() {
   const [tab, setTab] = useState('yukle')
-  const [docs, setDocs] = useState(getDocs)
+  const [docs, setDocs] = useState([])
+  const [loading, setLoading] = useState(true)
   const [translateText, setTranslateText] = useState('')
   const [extractText, setExtractText] = useState('')
+
+  useEffect(() => {
+    getDocs().then(data => {
+      setDocs(data)
+      setLoading(false)
+    })
+  }, [])
 
   function handleTranslate(doc) {
     setTranslateText(doc.note || '')
@@ -33,7 +41,7 @@ export default function App() {
     setTab('veri')
   }
 
-  function handleDocumentAnalyzed(result) {
+  async function handleDocumentAnalyzed(result) {
     const doc = {
       id: generateId(),
       title: result.title || 'Isimsiz belge',
@@ -49,9 +57,8 @@ export default function App() {
         result.original_text ? `ORIJINAL METIN:\n${result.original_text}` : '',
       ].filter(Boolean).join('\n\n'),
     }
-    const updated = [doc, ...docs]
-    setDocs(updated)
-    saveDocs(updated)
+    await saveDoc(doc)
+    setDocs(prev => [doc, ...prev])
     setTab('belgeler')
   }
 
@@ -95,14 +102,22 @@ export default function App() {
         </nav>
 
         <main className="flex-1 overflow-y-auto p-6 bg-stone-50">
-          {tab === 'yukle' && <Upload onDocumentAnalyzed={handleDocumentAnalyzed} />}
-          {tab === 'belgeler' && (
-            <Documents docs={docs} setDocs={setDocs} onTranslate={handleTranslate} onExtract={handleExtract} />
+          {loading ? (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-sm text-stone-400">Belgeler yukleniyor...</p>
+            </div>
+          ) : (
+            <>
+              {tab === 'yukle' && <Upload onDocumentAnalyzed={handleDocumentAnalyzed} />}
+              {tab === 'belgeler' && (
+                <Documents docs={docs} setDocs={setDocs} onTranslate={handleTranslate} onExtract={handleExtract} />
+              )}
+              {tab === 'ceviri' && <Translate key={translateText} initialText={translateText} />}
+              {tab === 'veri' && <Extract key={extractText} initialText={extractText} />}
+              {tab === 'arsiv' && <Archive />}
+              {tab === 'ayarlar' && <Settings />}
+            </>
           )}
-          {tab === 'ceviri' && <Translate key={translateText} initialText={translateText} />}
-          {tab === 'veri' && <Extract key={extractText} initialText={extractText} />}
-          {tab === 'arsiv' && <Archive />}
-          {tab === 'ayarlar' && <Settings />}
         </main>
       </div>
     </div>
