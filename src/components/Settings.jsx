@@ -19,7 +19,6 @@ export default function Settings() {
       <p className="text-sm text-stone-500 mb-6">
         Çeviri ve veri çıkarımı için gereklidir. Anahtar yalnızca tarayıcınızda saklanır, hiçbir sunucuya gönderilmez.
       </p>
-
       <div className="mb-4">
         <label className="block text-xs font-medium text-stone-500 mb-1.5">API Key</label>
         <div className="flex gap-2">
@@ -47,7 +46,6 @@ export default function Settings() {
           </button>
         </div>
       </div>
-
       <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg text-xs text-amber-800">
         <p className="font-medium mb-1">API anahtarı nasıl alınır?</p>
         <ol className="list-decimal list-inside space-y-1 text-amber-700">
@@ -56,16 +54,17 @@ export default function Settings() {
           <li>API Keys → Create Key</li>
           <li>Anahtarı buraya yapıştır</li>
         </ol>
-        
-          href="https://console.anthropic.com"
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-1 mt-2 text-amber-800 font-medium hover:underline"
-        >
-          console.anthropic.com <ExternalLink size={11} />
-        </a>
+        <p className="mt-2">
+          
+            href="https://console.anthropic.com"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 text-amber-800 font-medium hover:underline"
+          >
+            console.anthropic.com <ExternalLink size={11} />
+          </a>
+        </p>
       </div>
-
       {key && (
         <div className="mt-4 flex items-center gap-2 text-xs text-emerald-700">
           <CheckCircle size={13} />
