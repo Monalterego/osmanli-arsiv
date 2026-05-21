@@ -1,22 +1,24 @@
 import { useState } from 'react'
-import { BookOpen, FileText, Languages, Database, FolderOpen, Settings as SettingsIcon } from 'lucide-react'
+import { BookOpen, FileText, Languages, Database, FolderOpen, Settings as SettingsIcon, Upload as UploadIcon } from 'lucide-react'
 import Documents from './components/Documents'
 import Translate from './components/Translate'
 import Extract from './components/Extract'
 import Archive from './components/Archive'
 import Settings from './components/Settings'
-import { getDocs } from './lib/storage'
+import Upload from './components/Upload'
+import { getDocs, saveDocs, generateId } from './lib/storage'
 
 const NAV = [
+  { id: 'yukle', label: 'Belge Yukle', icon: UploadIcon },
   { id: 'belgeler', label: 'Belgelerim', icon: FileText },
-  { id: 'ceviri', label: 'Çeviri', icon: Languages },
-  { id: 'veri', label: 'Veri Çıkarımı', icon: Database },
-  { id: 'arsiv', label: 'Arşiv Yapısı', icon: FolderOpen },
+  { id: 'ceviri', label: 'Ceviri', icon: Languages },
+  { id: 'veri', label: 'Veri Cikarimi', icon: Database },
+  { id: 'arsiv', label: 'Arsiv Yapisi', icon: FolderOpen },
   { id: 'ayarlar', label: 'Ayarlar', icon: SettingsIcon },
 ]
 
 export default function App() {
-  const [tab, setTab] = useState('belgeler')
+  const [tab, setTab] = useState('yukle')
   const [docs, setDocs] = useState(getDocs)
   const [translateText, setTranslateText] = useState('')
   const [extractText, setExtractText] = useState('')
@@ -31,6 +33,27 @@ export default function App() {
     setTab('veri')
   }
 
+  function handleDocumentAnalyzed(result) {
+    const doc = {
+      id: generateId(),
+      title: result.title || 'Isimsiz belge',
+      dept: result.dept || 'Operation Department',
+      type: result.type || 'Dosya / File',
+      date: result.date || '',
+      url: '',
+      tags: result.tags || [],
+      note: [
+        result.summary_tr ? `OZET: ${result.summary_tr}` : '',
+        result.research_note ? `ARASTIRMA NOTU: ${result.research_note}` : '',
+        result.translation_tr ? `CEVIRI:\n${result.translation_tr}` : '',
+      ].filter(Boolean).join('\n\n'),
+    }
+    const updated = [doc, ...docs]
+    setDocs(updated)
+    saveDocs(updated)
+    setTab('belgeler')
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <header className="bg-white border-b border-stone-200 px-6 py-3.5 flex items-center gap-3">
@@ -38,8 +61,8 @@ export default function App() {
           <BookOpen size={14} className="text-white" />
         </div>
         <div>
-          <h1 className="text-sm font-medium text-stone-800 leading-tight">Osmanlı Bankası Arşiv Aracı</h1>
-          <p className="text-xs text-stone-400">SALT Research koleksiyonu — kişisel araştırma yöneticisi</p>
+          <h1 className="text-sm font-medium text-stone-800 leading-tight">Osmanli Bankasi Arsiv Araci</h1>
+          <p className="text-xs text-stone-400">SALT Research koleksiyonu — kisisel arastirma yoneticisi</p>
         </div>
       </header>
 
@@ -71,6 +94,7 @@ export default function App() {
         </nav>
 
         <main className="flex-1 overflow-y-auto p-6 bg-stone-50">
+          {tab === 'yukle' && <Upload onDocumentAnalyzed={handleDocumentAnalyzed} />}
           {tab === 'belgeler' && (
             <Documents docs={docs} setDocs={setDocs} onTranslate={handleTranslate} onExtract={handleExtract} />
           )}
