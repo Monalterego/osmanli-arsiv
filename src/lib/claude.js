@@ -1,17 +1,17 @@
 export async function callClaude(apiKey, systemPrompt, userMessage) {
-  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
     },
     body: JSON.stringify({
-      model: 'google/gemini-2.0-flash-001',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 2048,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userMessage }
-      ],
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userMessage }],
     }),
   })
 
@@ -21,23 +21,22 @@ export async function callClaude(apiKey, systemPrompt, userMessage) {
   }
 
   const data = await res.json()
-  return data.choices[0].message.content
+  return data.content[0].text
 }
 
 export async function analyzeDocument(apiKey, base64Data, mimeType) {
-  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
     },
     body: JSON.stringify({
-      model: 'google/gemini-2.0-flash-001',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 3000,
-      messages: [
-        {
-          role: 'system',
-          content: `Sen Osmanli Bankasi arsiv belgelerini analiz eden bir tarih arastirmacisin. 
+      system: `Sen Osmanli Bankasi arsiv belgelerini analiz eden bir tarih arastirmacisin. 
 Belgeyi inceleyip asagidaki JSON formatinda yanit ver. SADECE JSON yaz, baska hicbir sey yazma:
 {
   "title": "belge basligi veya tahmini baslik",
@@ -45,34 +44,36 @@ Belgeyi inceleyip asagidaki JSON formatinda yanit ver. SADECE JSON yaz, baska hi
   "type": "Dosya / File | Fotograf / Photograph | Dijital belge / Digital document | Defter / Register | Belge / Document | Brosur / Brochure | Diger",
   "date": "YYYY-MM-DD veya YYYY formatinda tarih",
   "language": "Fransizca | Osmanlica | Ingilizce | Diger",
-  "tags": ["kredi", "muhabere", "bilanco", "doviz", "borc", "faiz", "vergi", "sube", "London", "Paris", "Istanbul", "Beyrut", "Kahire", "personel", "hisse", "tahvil", "kamu borcu", "demiryolu", "Duyun-u Umumiye", "Hazine"],
+  "tags": ["kredi", "muhabere", "bilanco", "doviz"],
   "summary_tr": "Belgenin Turkce ozeti, 3-5 cumle",
   "translation_tr": "Belgedeki metnin tamami veya ozunun Turkce cevirisi",
   "key_entities": {
-    "kisiler": ["isim1", "isim2"],
+    "kisiler": ["isim1"],
     "kurumlar": ["kurum1"],
     "yerler": ["yer1"],
     "miktarlar": ["miktar1"],
     "tarihler": ["tarih1"]
   },
   "research_note": "Tez icin onemi ve kullanim onerileri"
-}`
-        },
+}`,
+      messages: [
         {
           role: 'user',
           content: [
             {
-              type: 'image_url',
-              image_url: {
-                url: `data:${mimeType};base64,${base64Data}`
-              }
+              type: 'image',
+              source: {
+                type: 'base64',
+                media_type: mimeType,
+                data: base64Data,
+              },
             },
             {
               type: 'text',
-              text: 'Bu Osmanli Bankasi arsiv belgesini analiz et ve istenen JSON formatinda yanit ver.'
-            }
-          ]
-        }
+              text: 'Bu Osmanli Bankasi arsiv belgesini analiz et ve istenen JSON formatinda yanit ver.',
+            },
+          ],
+        },
       ],
     }),
   })
@@ -83,7 +84,7 @@ Belgeyi inceleyip asagidaki JSON formatinda yanit ver. SADECE JSON yaz, baska hi
   }
 
   const data = await res.json()
-  const raw = data.choices[0].message.content
+  const raw = data.content[0].text
   const cleaned = raw.replace(/```json|```/g, '').trim()
   return JSON.parse(cleaned)
 }
