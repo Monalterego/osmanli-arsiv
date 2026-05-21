@@ -263,8 +263,8 @@ export default function Documents({ docs, setDocs, onTranslate, onExtract }) {
             className="px-2.5 py-1.5 text-sm border border-stone-200 rounded-lg bg-white focus:outline-none">
             <option value="">Tum klasorler</option>
             {allKlasorler.map(k => (
-              <option key={k} value={k}>{k.replace('https://archives.saltresearch.org/handle/123456789/', 'SALT/')}</option>
-            ))}
+  <option key={k} value={k}>{k}</option>
+))}
           </select>
         )}
       </div>

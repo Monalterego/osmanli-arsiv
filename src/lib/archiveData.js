@@ -212,3 +212,16 @@ export const THESIS_TAGS = [
   'Kahire', 'personel', 'hisse', 'tahvil', 'kamu borcu',
   'demiryolu', 'Duyun-u Umumiye', 'Hazine', 'banknot', 'gayrimenkul',
 ]
+
+export function findBreadcrumb(url) {
+  for (const dept of ARCHIVE_STRUCTURE) {
+    if (dept.url === url) return dept.name
+    for (const child of dept.children || []) {
+      if (child.url === url) return `${dept.name} > ${child.name}`
+      for (const grandchild of child.children || []) {
+        if (grandchild.url === url) return `${dept.name} > ${child.name} > ${grandchild.name}`
+      }
+    }
+  }
+  return url.replace('https://archives.saltresearch.org/handle/123456789/', 'SALT/')
+}

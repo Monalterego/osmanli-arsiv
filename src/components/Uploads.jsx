@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { Loader, FileText, CheckCircle, AlertCircle, X, Link } from 'lucide-react'
 import { getApiKey } from '../lib/storage'
 import { analyzeDocument } from '../lib/claude'
+import { findBreadcrumb } from '../lib/archiveData'
 
 export default function Upload({ onDocumentAnalyzed }) {
   const [saltUrl, setSaltUrl] = useState('')
@@ -17,11 +18,12 @@ export default function Upload({ onDocumentAnalyzed }) {
   }
 
   function handleUrlSubmit() {
-    const meta = parseSaltUrl(saltUrl.trim())
-    if (!meta) { setError('Gecerli bir SALT URL girin.'); return }
-    setError('')
-    setSaltMeta(meta)
-  }
+  const meta = parseSaltUrl(saltUrl.trim())
+  if (!meta) { setError('Gecerli bir SALT URL girin.'); return }
+  setError('')
+  const breadcrumb = findBreadcrumb(saltUrl.trim())
+  setSaltMeta({ ...meta, breadcrumb })
+}
 
   async function handleFiles(files) {
     const key = getApiKey()
@@ -87,13 +89,13 @@ export default function Upload({ onDocumentAnalyzed }) {
   async function saveAll() {
     const ready = queue.filter(item => item.status === 'tamam' && item.result)
     for (const item of ready) {
-      await onDocumentAnalyzed(item.result, saltMeta?.url)
+      await onDocumentAnalyzed(item.result, saltMeta?.breadcrumb || saltMeta?.url)
     }
     setQueue([])
   }
 
   async function saveOne(item) {
-    await onDocumentAnalyzed(item.result, saltMeta?.url)
+    await onDocumentAnalyzed(item.result, saltMeta?.breadcrumb || saltMeta?.url)
     setQueue(prev => prev.filter(q => q !== item))
   }
 
@@ -139,7 +141,7 @@ export default function Upload({ onDocumentAnalyzed }) {
         {saltMeta && (
           <div className="mt-2 flex items-center gap-2 text-xs text-emerald-700">
             <CheckCircle size={12} />
-            Klasor ayarlandi: {saltMeta.url}
+            Klasor ayarlandi: {saltMeta.breadcrumb || saltMeta.url}
             <button onClick={() => { setSaltMeta(null); setSaltUrl('') }} className="text-stone-400 hover:text-stone-600 ml-1">
               <X size={12} />
             </button>
