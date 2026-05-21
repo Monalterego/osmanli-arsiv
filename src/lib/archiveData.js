@@ -1,6 +1,6 @@
 export const ARCHIVE_STRUCTURE = [
   {
-    name: 'Muhasebe Bolumu',
+    name: 'Accounting Department',
     url: 'https://archives.saltresearch.org/handle/123456789/2303',
     description: 'Ottoman Bank\'in 1856\'da kuruluşundan itibaren tutulan muhasebe defterlerini icerir. Arsiv\'in en sureklive butunluklu serisidir.',
     children: [
@@ -27,7 +27,7 @@ export const ARCHIVE_STRUCTURE = [
     ],
   },
   {
-    name: 'Emisyon Bolumu',
+    name: 'Issue Department',
     url: 'https://archives.saltresearch.org/handle/123456789/2399',
     description: 'Bank-i Osmani-i Sahane\'nin tedavule soktugu banknotlar ile para basma imtiyazi ve isleviyle ilgili belge, yazisma ve defterlerini icerir.',
     children: [
@@ -40,14 +40,7 @@ export const ARCHIVE_STRUCTURE = [
           { name: 'V. Mehmed Resad (1327-1336)', url: 'https://archives.saltresearch.org/handle/123456789/2403' },
         ],
       },
-      { 
-  name: 'Banknotlarin tedavule cikmasi ve geri odenmesiyle ilgili yazisma', 
-  url: 'https://archives.saltresearch.org/handle/123456789/2410', 
-  children: [
-    { name: 'Inspection Ihsan Tezel sur banknotes. Application de la convention. Questions diverses', url: 'https://archives.saltresearch.org/handle/123456789/2411' },
-    { name: 'Coupures de journaux et correspondence sur le papier - monnaie', url: 'https://archives.saltresearch.org/handle/123456789/141278' },
-  ]
-},
+      { name: 'Banknotlarin tedavule cikmasi ve geri odenmesiyle ilgili yazisma', url: 'https://archives.saltresearch.org/handle/123456789/2410', children: [] },
       { name: 'Banknot numaralama ve hareket defterleri', url: 'https://archives.saltresearch.org/handle/123456789/2409', children: [] },
       {
         name: 'Devlet tarafindan basilan paralar',
@@ -63,7 +56,7 @@ export const ARCHIVE_STRUCTURE = [
     ],
   },
   {
-    name: 'Gayrimenkul Bolumu',
+    name: 'Real Estates Department',
     url: 'https://archives.saltresearch.org/handle/123456789/2511',
     description: 'Osmanli Bankasi\'nin gayrimenkulleri ve sube yapilarinа dair belge, defter ve fotograflari bir araya getirir.',
     children: [
@@ -126,7 +119,7 @@ export const ARCHIVE_STRUCTURE = [
     ],
   },
   {
-    name: 'Idari Isler Bolumu',
+    name: 'Administrative Office',
     url: 'https://archives.saltresearch.org/handle/123456789/2324',
     description: 'Reklam dosyalari, reklam ornekleri, sponsorluk dosyalarinin yani sira poster, davetiye ve el ilani gibi belgeleri icerir.',
     children: [
@@ -141,7 +134,7 @@ export const ARCHIVE_STRUCTURE = [
     ],
   },
   {
-    name: 'Operasyon Bolumu',
+    name: 'Operation Department',
     url: 'https://archives.saltresearch.org/handle/123456789/2450',
     description: 'Hisse senedi ve tahviller ile degerli kagit emanet islemlerinin belge ve defterlerini icerir.',
     children: [
@@ -181,7 +174,7 @@ export const ARCHIVE_STRUCTURE = [
     ],
   },
   {
-    name: 'Osmanli Bankasi Londra',
+    name: 'Ottoman Bank London',
     url: 'https://archives.saltresearch.org/handle/123456789/2496',
     description: 'Londra\'da Guildhall Kutuphanesi\'nde bulunan Osmanli Bankasi Arsivleri\'nin dijital kopyalarindan olusur.',
     children: [
@@ -190,7 +183,7 @@ export const ARCHIVE_STRUCTURE = [
     ],
   },
   {
-    name: 'Personel Bolumu',
+    name: 'Personnel Department',
     url: 'https://archives.saltresearch.org/handle/123456789/2499',
     description: 'Cesitli sosyal, ekonomik, dinsel veya etnik kokene sahip cok sayida kisinin bilgilerini iceren belge ve fotograflardan olusur.',
     children: [
