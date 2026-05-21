@@ -21,6 +21,12 @@ function DocCard({ doc, onDelete, onTranslate, onExtract }) {
             {doc.tags?.map(t => (
               <span key={t} className="text-xs px-2 py-0.5 rounded-full bg-stone-100 text-stone-600">{t}</span>
             ))}
+            {doc.salt_klasor && (
+              <button onClick={() => window.open(doc.salt_klasor, '_blank')}
+                className="text-xs px-2 py-0.5 rounded-full bg-stone-800 text-white hover:bg-stone-600">
+                SALT
+              </button>
+            )}
           </div>
           {doc.note && (
             <div className="mt-2 space-y-2">
@@ -188,8 +194,10 @@ export default function Documents({ docs, setDocs, onTranslate, onExtract }) {
   const [search, setSearch] = useState('')
   const [deptFilter, setDeptFilter] = useState('')
   const [tagFilter, setTagFilter] = useState('')
+  const [klasorFilter, setKlasorFilter] = useState('')
 
   const allTags = useMemo(() => [...new Set(docs.flatMap(d => d.tags || []))], [docs])
+  const allKlasorler = useMemo(() => [...new Set(docs.map(d => d.salt_klasor).filter(Boolean))], [docs])
 
   const filtered = useMemo(() => {
     return docs.filter(d => {
@@ -197,9 +205,10 @@ export default function Documents({ docs, setDocs, onTranslate, onExtract }) {
       const matchSearch = !q || d.title.toLowerCase().includes(q) || (d.note || '').toLowerCase().includes(q)
       const matchDept = !deptFilter || d.dept === deptFilter
       const matchTag = !tagFilter || (d.tags || []).includes(tagFilter)
-      return matchSearch && matchDept && matchTag
+      const matchKlasor = !klasorFilter || d.salt_klasor === klasorFilter
+      return matchSearch && matchDept && matchTag && matchKlasor
     })
-  }, [docs, search, deptFilter, tagFilter])
+  }, [docs, search, deptFilter, tagFilter, klasorFilter])
 
   async function addDoc(doc) {
     await saveDoc(doc)
@@ -249,6 +258,15 @@ export default function Documents({ docs, setDocs, onTranslate, onExtract }) {
           <option value="">Tum etiketler</option>
           {allTags.map(t => <option key={t}>{t}</option>)}
         </select>
+        {allKlasorler.length > 0 && (
+          <select value={klasorFilter} onChange={e => setKlasorFilter(e.target.value)}
+            className="px-2.5 py-1.5 text-sm border border-stone-200 rounded-lg bg-white focus:outline-none">
+            <option value="">Tum klasorler</option>
+            {allKlasorler.map(k => (
+              <option key={k} value={k}>{k.replace('https://archives.saltresearch.org/handle/123456789/', 'SALT/')}</option>
+            ))}
+          </select>
+        )}
       </div>
 
       {filtered.length === 0 ? (

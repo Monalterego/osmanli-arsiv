@@ -49,6 +49,7 @@ export default function App() {
       type: result.type || 'Dosya / File',
       date: result.date || '',
       url: saltUrl || '',
+      salt_klasor: saltUrl || '',
       tags: result.tags || [],
       note: [
         result.summary_tr ? `OZET: ${result.summary_tr}` : '',
