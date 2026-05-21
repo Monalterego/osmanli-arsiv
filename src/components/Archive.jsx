@@ -12,23 +12,18 @@ function TreeItem({ item, depth = 0 }) {
         className={`flex items-center gap-2 py-2 pr-3 ${hasChildren ? 'cursor-pointer hover:bg-stone-50' : ''}`}
         onClick={() => hasChildren && setOpen(o => !o)}
       >
-        {hasChildren ? (
-          <span className="text-stone-400 text-xs w-3">{open ? '-' : '+'}</span>
-        ) : (
-          <span className="w-3 text-stone-200 text-xs">-</span>
-        )}
+        <span className="text-stone-400 text-xs w-3">
+          {hasChildren ? (open ? '-' : '+') : ''}
+        </span>
         <span className={`flex-1 text-sm ${depth === 0 ? 'font-medium text-stone-800' : 'text-stone-600'}`}>
           {item.name}
         </span>
-        
-          href={item.url}
-          target="_blank"
-          rel="noreferrer"
-          onClick={e => e.stopPropagation()}
-          className="text-xs text-blue-500 hover:underline flex-shrink-0"
+        <button
+          onClick={e => { e.stopPropagation(); window.open(item.url, '_blank') }}
+          className="text-xs text-blue-500 hover:underline flex-shrink-0 bg-transparent border-none cursor-pointer"
         >
-          ac
-        </a>
+          {String.fromCharCode(97) + String.fromCharCode(99)}
+        </button>
       </div>
       {item.description && depth === 0 && (
         <p className="text-xs text-stone-400 pl-8 pb-1 pr-3">{item.description}</p>
@@ -49,14 +44,12 @@ export default function Archive() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-base font-medium text-stone-800">Arsiv Yapisi</h2>
-        
-          href="https://archives.saltresearch.org/handle/123456789/2302"
-          target="_blank"
-          rel="noreferrer"
-          className="text-xs px-3 py-1.5 border border-stone-200 rounded-lg hover:bg-stone-50 text-stone-600"
+        <button
+          onClick={() => window.open('https://archives.saltresearch.org/handle/123456789/2302', '_blank')}
+          className="text-xs px-3 py-1.5 border border-stone-200 rounded-lg hover:bg-stone-50 text-stone-600 cursor-pointer bg-white"
         >
-          SALT'ta ac
-        </a>
+          SALT
+        </button>
       </div>
       <p className="text-xs text-stone-500 mb-3">
         Bank-i Osmani Arsivi — 7 bolum, 10.000+ belge, 1856-2001
