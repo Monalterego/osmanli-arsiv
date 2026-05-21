@@ -54,7 +54,8 @@ Belgeyi inceleyip asagidaki JSON formatinda yanit ver. SADECE JSON yaz, baska hi
     "miktarlar": ["miktar1"],
     "tarihler": ["tarih1"]
   },
-  "research_note": "Tez icin onemi ve kullanim onerileri"
+  "research_note": "Tez icin onemi ve kullanim onerileri",
+  "original_text": "Belgedeki orijinal metnin tamami, hic degistirmeden"
 }`,
       messages: [
         {

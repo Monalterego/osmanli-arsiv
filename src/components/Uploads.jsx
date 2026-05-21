@@ -175,11 +175,18 @@ export default function Upload({ onDocumentAnalyzed }) {
             )}
 
             {result.research_note && (
-              <div className="bg-amber-50 border border-amber-100 rounded-lg p-3">
-                <p className="text-xs font-medium text-amber-800 mb-1">Arastirma notu</p>
-                <p className="text-xs text-amber-700 leading-relaxed">{result.research_note}</p>
-              </div>
-            )}
+  <div className="bg-amber-50 border border-amber-100 rounded-lg p-3">
+    <p className="text-xs font-medium text-amber-800 mb-1">Arastirma notu</p>
+    <p className="text-xs text-amber-700 leading-relaxed">{result.research_note}</p>
+  </div>
+)}
+
+{result.original_text && (
+  <div className="bg-stone-50 border border-stone-200 rounded-lg p-3">
+    <p className="text-xs font-medium text-stone-600 mb-1">Orijinal metin</p>
+    <p className="text-xs text-stone-600 leading-relaxed font-mono whitespace-pre-wrap">{result.original_text}</p>
+  </div>
+)}
           </div>
         </div>
       )}

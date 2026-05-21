@@ -46,6 +46,7 @@ export default function App() {
         result.summary_tr ? `OZET: ${result.summary_tr}` : '',
         result.research_note ? `ARASTIRMA NOTU: ${result.research_note}` : '',
         result.translation_tr ? `CEVIRI:\n${result.translation_tr}` : '',
+        result.original_text ? `ORIJINAL METIN:\n${result.original_text}` : '',
       ].filter(Boolean).join('\n\n'),
     }
     const updated = [doc, ...docs]
