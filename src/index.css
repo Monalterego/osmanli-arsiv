@@ -4,7 +4,9 @@
 
 @layer base {
   body {
-    @apply bg-stone-50 text-stone-900 antialiased;
+    @apply antialiased;
     font-family: 'Inter', system-ui, sans-serif;
+    background-color: #F0EEF5;
+    color: #1E1B2E;
   }
 }

@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
-import { BookOpen, FileText, Languages, Database, FolderOpen, Settings as SettingsIcon, Upload as UploadIcon } from 'lucide-react'
+import { BookOpen, FileText, Languages, Database, FolderOpen, Settings as SettingsIcon, Upload as UploadIcon, Notebook } from 'lucide-react'
 import Documents from './components/Documents'
 import Translate from './components/Translate'
 import Extract from './components/Extract'
 import Archive from './components/Archive'
 import Settings from './components/Settings'
 import Upload from './components/Uploads'
-import { getDocs, saveDoc, generateId } from './lib/storage'
 import TezNotlari from './components/TezNotlari'
+import { getDocs, saveDoc, generateId } from './lib/storage'
 
 const NAV = [
   { id: 'yukle', label: 'Belge Yukle', icon: UploadIcon },
@@ -68,51 +68,53 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="bg-white border-b border-stone-200 px-6 py-3.5 flex items-center gap-3">
-        <div className="w-7 h-7 rounded-lg bg-stone-800 flex items-center justify-center">
-          <BookOpen size={14} className="text-white" />
-        </div>
-        <div>
-          <h1 className="text-sm font-medium text-stone-800 leading-tight">Osmanli Bankasi Arsiv Araci</h1>
-          <p className="text-xs text-stone-400">SALT Research koleksiyonu — kisisel arastirma yoneticisi</p>
-        </div>
-      </header>
-
+    <div className="min-h-screen flex flex-col" style={{background:'#F0EEF5'}}>
       <div className="flex flex-1 overflow-hidden">
-        <nav className="w-48 bg-white border-r border-stone-200 py-3 flex-shrink-0">
-          {NAV.map(item => {
-            const Icon = item.icon
-            const isActive = tab === item.id
-            return (
-              <button
-                key={item.id}
-                onClick={() => setTab(item.id)}
-                className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm transition-colors ${
-                  isActive
-                    ? 'bg-stone-100 text-stone-900 font-medium'
-                    : 'text-stone-500 hover:bg-stone-50 hover:text-stone-700'
-                }`}
-              >
-                <Icon size={15} />
-                {item.label}
-                {item.id === 'belgeler' && docs.length > 0 && (
-                  <span className="ml-auto text-xs bg-stone-200 text-stone-600 px-1.5 py-0.5 rounded-full">
-                    {docs.length}
-                  </span>
-                )}
-              </button>
-            )
-          })}
+        {/* Sidebar */}
+        <nav className="flex flex-col flex-shrink-0" style={{width:'200px', background:'#1E1B2E'}}>
+          <div className="px-4 py-4" style={{borderBottom:'1px solid rgba(255,255,255,0.07)'}}>
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center mb-2" style={{background:'#7F77DD'}}>
+              <BookOpen size={13} color="#EAE8F5" />
+            </div>
+            <p className="text-xs font-medium leading-snug" style={{color:'#EAE8F5'}}>Osmanli Bankasi<br/>Arsiv Araci</p>
+            <p className="text-xs mt-0.5" style={{color:'rgba(234,232,245,0.4)'}}>SALT Research</p>
+          </div>
+          <div className="py-2 flex-1">
+            {NAV.map(item => {
+              const Icon = item.icon
+              const isActive = tab === item.id
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setTab(item.id)}
+                  className="w-full flex items-center gap-2 px-4 py-2 text-xs transition-colors text-left"
+                  style={{
+                    color: isActive ? '#AFA9EC' : 'rgba(234,232,245,0.5)',
+                    background: isActive ? 'rgba(127,119,221,0.12)' : 'transparent',
+                    borderRight: isActive ? '2px solid #7F77DD' : '2px solid transparent',
+                  }}
+                >
+                  <Icon size={14} />
+                  {item.label}
+                  {item.id === 'belgeler' && docs.length > 0 && (
+                    <span className="ml-auto text-xs px-1.5 py-0.5 rounded-full" style={{background:'rgba(127,119,221,0.2)', color:'#AFA9EC'}}>
+                      {docs.length}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
         </nav>
 
-        <main className="flex-1 overflow-y-auto p-6 bg-stone-50">
+        {/* Main */}
+        <main className="flex-1 overflow-y-auto" style={{background:'#F0EEF5'}}>
           {loading ? (
             <div className="flex items-center justify-center h-full">
-              <p className="text-sm text-stone-400">Belgeler yukleniyor...</p>
+              <p className="text-sm" style={{color:'#6B6488'}}>Yukleniyor...</p>
             </div>
           ) : (
-            <>
+            <div className="p-6">
               {tab === 'yukle' && <Upload onDocumentAnalyzed={handleDocumentAnalyzed} />}
               {tab === 'belgeler' && (
                 <Documents docs={docs} setDocs={setDocs} onTranslate={handleTranslate} onExtract={handleExtract} />
@@ -120,9 +122,9 @@ export default function App() {
               {tab === 'ceviri' && <Translate key={translateText} initialText={translateText} />}
               {tab === 'veri' && <Extract key={extractText} initialText={extractText} />}
               {tab === 'arsiv' && <Archive />}
-              {tab === 'ayarlar' && <Settings />}
               {tab === 'tez' && <TezNotlari />}
-            </>
+              {tab === 'ayarlar' && <Settings />}
+            </div>
           )}
         </main>
       </div>
