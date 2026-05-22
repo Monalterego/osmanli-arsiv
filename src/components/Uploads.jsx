@@ -2,7 +2,6 @@ import { useState, useRef } from 'react'
 import { Loader, FileText, CheckCircle, AlertCircle, X, BookOpen } from 'lucide-react'
 import { getApiKey, saveDoc, generateId } from '../lib/storage'
 import { analyzeDocument } from '../lib/claude'
-import { findBreadcrumb } from '../lib/archiveData'
 import { findBreadcrumb, ARCHIVE_STRUCTURE } from '../lib/archiveData'
 
 export default function Upload({ onDocumentAnalyzed }) {
