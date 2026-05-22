@@ -8,28 +8,39 @@ function TreeItem({ item, depth = 0 }) {
   return (
     <div>
       <div
-        style={{ paddingLeft: `${depth * 16 + 12}px` }}
-        className={`flex items-center gap-2 py-2 pr-3 ${hasChildren ? 'cursor-pointer hover:bg-stone-50' : ''}`}
+        style={{
+          display:'flex', alignItems:'center', gap:'8px',
+          padding:`7px ${12 + depth * 16}px 7px 12px`,
+          cursor: hasChildren ? 'pointer' : 'default',
+          borderBottom:'0.5px solid rgba(30,27,46,0.04)',
+        }}
         onClick={() => hasChildren && setOpen(o => !o)}
       >
-        <span className="text-stone-400 text-xs w-3">
-          {hasChildren ? (open ? '-' : '+') : ''}
+        <span style={{fontSize:'11px', color:'#9B97B8', width:'12px', flexShrink:0, textAlign:'center'}}>
+          {hasChildren ? (open ? '−' : '+') : ''}
         </span>
-        <span className={`flex-1 text-sm ${depth === 0 ? 'font-medium text-stone-800' : 'text-stone-600'}`}>
+        <span style={{
+          flex:1, fontSize: depth === 0 ? '12px' : '11px',
+          fontWeight: depth === 0 ? 500 : 400,
+          color: depth === 0 ? '#1E1B2E' : '#4A4670',
+          lineHeight:1.4,
+        }}>
           {item.name}
         </span>
         <button
           onClick={e => { e.stopPropagation(); window.open(item.url, '_blank') }}
-          className="text-xs text-blue-500 hover:underline flex-shrink-0 bg-transparent border-none cursor-pointer"
+          style={{fontSize:'10px', padding:'2px 8px', border:'0.5px solid rgba(30,27,46,0.12)', borderRadius:'4px', background:'transparent', color:'#7F77DD', cursor:'pointer', flexShrink:0}}
         >
-          {String.fromCharCode(97) + String.fromCharCode(99)}
+          ac
         </button>
       </div>
       {item.description && depth === 0 && (
-        <p className="text-xs text-stone-400 pl-8 pb-1 pr-3">{item.description}</p>
+        <p style={{fontSize:'10px', color:'#9B97B8', padding:'0 12px 6px 36px', lineHeight:1.5}}>
+          {item.description}
+        </p>
       )}
       {open && hasChildren && (
-        <div className="border-l border-stone-100 ml-6">
+        <div style={{borderLeft:'1px solid rgba(127,119,221,0.15)', marginLeft:'20px'}}>
           {item.children.map(child => (
             <TreeItem key={child.url} item={child} depth={depth + 1} />
           ))}
@@ -42,19 +53,19 @@ function TreeItem({ item, depth = 0 }) {
 export default function Archive() {
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base font-medium text-stone-800">Arsiv Yapisi</h2>
+      <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'16px'}}>
+        <h2 style={{fontSize:'15px', fontWeight:500, color:'#1E1B2E'}}>Arsiv Yapisi</h2>
         <button
           onClick={() => window.open('https://archives.saltresearch.org/handle/123456789/2302', '_blank')}
-          className="text-xs px-3 py-1.5 border border-stone-200 rounded-lg hover:bg-stone-50 text-stone-600 cursor-pointer bg-white"
+          style={{fontSize:'11px', padding:'5px 12px', border:'0.5px solid rgba(30,27,46,0.15)', borderRadius:'6px', background:'transparent', color:'#6B6488', cursor:'pointer'}}
         >
-          SALT
+          SALT ana sayfa
         </button>
       </div>
-      <p className="text-xs text-stone-500 mb-3">
+      <p style={{fontSize:'11px', color:'#9B97B8', marginBottom:'12px'}}>
         Bank-i Osmani Arsivi — 7 bolum, 10.000+ belge, 1856-2001
       </p>
-      <div className="bg-white border border-stone-200 rounded-xl overflow-hidden divide-y divide-stone-100">
+      <div style={{background:'#F7F6FB', border:'0.5px solid rgba(30,27,46,0.1)', borderRadius:'10px', overflow:'hidden'}}>
         {ARCHIVE_STRUCTURE.map(dept => (
           <TreeItem key={dept.url} item={dept} depth={0} />
         ))}

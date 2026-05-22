@@ -3,56 +3,52 @@ import { Plus, Trash2, ChevronDown, ChevronUp, BookOpen } from 'lucide-react'
 import { getTezNotlari, saveTezNotu, deleteTezNotu, generateId } from '../lib/storage'
 
 const KATEGORILER = [
-  'Tez Konusu',
-  'Kaynak Notu',
-  'Arşiv Gözlemi',
-  'Danışman Görüşmesi',
-  'Argüman',
-  'Soru',
-  'Genel',
+  'Tez Konusu', 'Kaynak Notu', 'Arsiv Gozlemi',
+  'Danisман Gorusmesi', 'Arguman', 'Soru', 'Genel',
 ]
+
+const KATEGORI_STYLE = {
+  'Tez Konusu':        { bg:'rgba(127,119,221,0.1)',  border:'rgba(127,119,221,0.3)', label:'#534AB7' },
+  'Kaynak Notu':       { bg:'rgba(186,117,23,0.08)', border:'rgba(186,117,23,0.25)', label:'#854F0B' },
+  'Arsiv Gozlemi':     { bg:'rgba(61,100,34,0.08)',  border:'rgba(61,100,34,0.2)',   label:'#3B6D11' },
+  'Danisман Gorusmesi':{ bg:'rgba(24,95,165,0.08)',  border:'rgba(24,95,165,0.2)',   label:'#185FA5' },
+  'Arguman':           { bg:'rgba(162,45,45,0.07)',  border:'rgba(162,45,45,0.2)',   label:'#A32D2D' },
+  'Soru':              { bg:'rgba(186,117,23,0.07)', border:'rgba(186,117,23,0.2)', label:'#854F0B' },
+  'Genel':             { bg:'rgba(30,27,46,0.04)',   border:'rgba(30,27,46,0.12)',   label:'#6B6488' },
+}
 
 function NotKarti({ not, onDelete }) {
   const [expanded, setExpanded] = useState(false)
-
-  const renkler = {
-    'Tez Konusu': 'bg-blue-50 border-blue-200 text-blue-800',
-    'Kaynak Notu': 'bg-amber-50 border-amber-200 text-amber-800',
-    'Arşiv Gözlemi': 'bg-emerald-50 border-emerald-200 text-emerald-800',
-    'Danışman Görüşmesi': 'bg-purple-50 border-purple-200 text-purple-800',
-    'Argüman': 'bg-red-50 border-red-200 text-red-800',
-    'Soru': 'bg-orange-50 border-orange-200 text-orange-800',
-    'Genel': 'bg-stone-50 border-stone-200 text-stone-700',
-  }
-
-  const renk = renkler[not.kategori] || renkler['Genel']
+  const s = KATEGORI_STYLE[not.kategori] || KATEGORI_STYLE['Genel']
 
   return (
-    <div className={`border rounded-xl p-4 ${renk}`}>
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-medium opacity-70">{not.kategori}</span>
-            <span className="text-xs opacity-50">{new Date(not.created_at).toLocaleDateString('tr-TR')}</span>
+    <div style={{background:s.bg, border:`0.5px solid ${s.border}`, borderRadius:'8px', padding:'12px 14px'}}>
+      <div style={{display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'8px'}}>
+        <div style={{flex:1}}>
+          <div style={{display:'flex', alignItems:'center', gap:'8px', marginBottom:'4px'}}>
+            <span style={{fontSize:'10px', fontWeight:500, color:s.label}}>{not.kategori}</span>
+            <span style={{fontSize:'10px', color:'#9B97B8'}}>{new Date(not.created_at).toLocaleDateString('tr-TR')}</span>
           </div>
-          <p className="text-sm font-medium mb-1">{not.baslik}</p>
-          <p className={`text-xs leading-relaxed opacity-80 ${!expanded && not.icerik?.length > 200 ? 'line-clamp-3' : ''}`}>
+          <p style={{fontSize:'12px', fontWeight:500, color:'#1E1B2E', marginBottom:'4px'}}>{not.baslik}</p>
+          <p style={{fontSize:'11px', color:'#4A4670', lineHeight:1.6, display: !expanded && not.icerik?.length > 200 ? '-webkit-box' : 'block', WebkitLineClamp: !expanded ? 3 : 'unset', WebkitBoxOrient:'vertical', overflow: !expanded && not.icerik?.length > 200 ? 'hidden' : 'visible'}}>
             {not.icerik}
           </p>
           {not.icerik?.length > 200 && (
-            <button onClick={() => setExpanded(e => !e)} className="text-xs opacity-60 hover:opacity-100 flex items-center gap-0.5 mt-1">
+            <button onClick={() => setExpanded(e => !e)}
+              style={{fontSize:'10px', color:'#9B97B8', background:'none', border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:'2px', marginTop:'2px', padding:0}}>
               {expanded ? <><ChevronUp size={11} /> Kapat</> : <><ChevronDown size={11} /> Devamini goster</>}
             </button>
           )}
           {not.etiketler?.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-2">
+            <div style={{display:'flex', flexWrap:'wrap', gap:'4px', marginTop:'8px'}}>
               {not.etiketler.map(e => (
-                <span key={e} className="text-xs px-2 py-0.5 rounded-full bg-white bg-opacity-60">{e}</span>
+                <span key={e} style={{fontSize:'10px', padding:'1px 6px', borderRadius:'4px', background:'rgba(255,255,255,0.5)', color:'#6B6488'}}>{e}</span>
               ))}
             </div>
           )}
         </div>
-        <button onClick={() => onDelete(not.id)} className="opacity-40 hover:opacity-80 flex-shrink-0">
+        <button onClick={() => onDelete(not.id)}
+          style={{background:'none', border:'none', cursor:'pointer', color:'rgba(30,27,46,0.25)', flexShrink:0, padding:'2px'}}>
           <Trash2 size={13} />
         </button>
       </div>
@@ -61,22 +57,14 @@ function NotKarti({ not, onDelete }) {
 }
 
 function NotEkleForm({ onAdd, onCancel }) {
-  const [form, setForm] = useState({
-    baslik: '',
-    icerik: '',
-    kategori: 'Genel',
-    etiketler: [],
-  })
+  const [form, setForm] = useState({ baslik:'', icerik:'', kategori:'Genel', etiketler:[] })
   const [etiketInput, setEtiketInput] = useState('')
 
   function set(k, v) { setForm(f => ({ ...f, [k]: v })) }
 
   function addEtiket() {
     const e = etiketInput.trim()
-    if (e && !form.etiketler.includes(e)) {
-      set('etiketler', [...form.etiketler, e])
-      setEtiketInput('')
-    }
+    if (e && !form.etiketler.includes(e)) { set('etiketler', [...form.etiketler, e]); setEtiketInput('') }
   }
 
   function handleSubmit() {
@@ -85,51 +73,56 @@ function NotEkleForm({ onAdd, onCancel }) {
   }
 
   return (
-    <div className="bg-white border border-stone-200 rounded-xl p-5 mb-4">
-      <h3 className="text-sm font-medium text-stone-800 mb-4">Yeni Not</h3>
-      <div className="space-y-3">
+    <div style={{background:'#F7F6FB', border:'0.5px solid rgba(30,27,46,0.12)', borderRadius:'10px', padding:'16px', marginBottom:'16px'}}>
+      <h3 style={{fontSize:'13px', fontWeight:500, color:'#1E1B2E', marginBottom:'12px'}}>Yeni Not</h3>
+      <div style={{display:'flex', flexDirection:'column', gap:'10px'}}>
         <div>
-          <label className="block text-xs font-medium text-stone-500 mb-1">Baslik *</label>
+          <label style={{display:'block', fontSize:'11px', fontWeight:500, color:'#6B6488', marginBottom:'4px'}}>Baslik *</label>
           <input type="text" value={form.baslik} onChange={e => set('baslik', e.target.value)}
-            placeholder="ornek: Tez konusu adayi - Emisyon imtiyazi (1863-1914)"
-            className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none focus:border-stone-400" />
+            style={{width:'100%', padding:'7px 10px', fontSize:'12px', border:'0.5px solid rgba(30,27,46,0.15)', borderRadius:'6px', background:'#F0EEF5', color:'#1E1B2E', outline:'none'}} />
         </div>
         <div>
-          <label className="block text-xs font-medium text-stone-500 mb-1">Kategori</label>
+          <label style={{display:'block', fontSize:'11px', fontWeight:500, color:'#6B6488', marginBottom:'4px'}}>Kategori</label>
           <select value={form.kategori} onChange={e => set('kategori', e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg bg-white focus:outline-none focus:border-stone-400">
+            style={{width:'100%', padding:'7px 10px', fontSize:'12px', border:'0.5px solid rgba(30,27,46,0.15)', borderRadius:'6px', background:'#F0EEF5', color:'#1E1B2E', outline:'none'}}>
             {KATEGORILER.map(k => <option key={k}>{k}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-stone-500 mb-1">Icerik</label>
-          <textarea value={form.icerik} onChange={e => set('icerik', e.target.value)}
-            rows={4} placeholder="Notunuzu buraya yazin..."
-            className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none focus:border-stone-400 resize-none" />
+          <label style={{display:'block', fontSize:'11px', fontWeight:500, color:'#6B6488', marginBottom:'4px'}}>Icerik</label>
+          <textarea value={form.icerik} onChange={e => set('icerik', e.target.value)} rows={4}
+            style={{width:'100%', padding:'7px 10px', fontSize:'12px', border:'0.5px solid rgba(30,27,46,0.15)', borderRadius:'6px', background:'#F0EEF5', color:'#1E1B2E', outline:'none', resize:'none'}} />
         </div>
         <div>
-          <label className="block text-xs font-medium text-stone-500 mb-1">Etiketler</label>
-          <div className="flex gap-2">
+          <label style={{display:'block', fontSize:'11px', fontWeight:500, color:'#6B6488', marginBottom:'4px'}}>Etiketler</label>
+          <div style={{display:'flex', gap:'6px'}}>
             <input type="text" value={etiketInput} onChange={e => setEtiketInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && addEtiket()}
               placeholder="Etiket ekle..."
-              className="flex-1 px-3 py-1.5 text-xs border border-stone-200 rounded-lg focus:outline-none focus:border-stone-400" />
-            <button onClick={addEtiket} className="px-3 py-1.5 text-xs border border-stone-200 rounded-lg hover:bg-stone-50">Ekle</button>
+              style={{flex:1, padding:'6px 10px', fontSize:'11px', border:'0.5px solid rgba(30,27,46,0.15)', borderRadius:'6px', background:'#F0EEF5', color:'#1E1B2E', outline:'none'}} />
+            <button onClick={addEtiket}
+              style={{padding:'6px 12px', fontSize:'11px', border:'0.5px solid rgba(30,27,46,0.15)', borderRadius:'6px', background:'transparent', color:'#6B6488', cursor:'pointer'}}>Ekle</button>
           </div>
           {form.etiketler.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-1.5">
+            <div style={{display:'flex', flexWrap:'wrap', gap:'4px', marginTop:'6px'}}>
               {form.etiketler.map(e => (
                 <span key={e} onClick={() => set('etiketler', form.etiketler.filter(x => x !== e))}
-                  className="text-xs px-2 py-0.5 rounded-full bg-stone-100 text-stone-600 cursor-pointer hover:bg-red-50 hover:text-red-600">
+                  style={{fontSize:'10px', padding:'1px 6px', borderRadius:'4px', background:'rgba(127,119,221,0.1)', color:'#534AB7', cursor:'pointer'}}>
                   {e} ×
                 </span>
               ))}
             </div>
           )}
         </div>
-        <div className="flex gap-2 pt-1">
-          <button onClick={handleSubmit} className="px-4 py-2 bg-stone-800 text-white text-sm rounded-lg hover:bg-stone-700">Kaydet</button>
-          <button onClick={onCancel} className="px-4 py-2 border border-stone-200 text-stone-600 text-sm rounded-lg hover:bg-stone-50">Iptal</button>
+        <div style={{display:'flex', gap:'8px'}}>
+          <button onClick={handleSubmit}
+            style={{padding:'7px 16px', background:'#3C3489', color:'#EAE8F5', fontSize:'12px', borderRadius:'6px', border:'none', cursor:'pointer'}}>
+            Kaydet
+          </button>
+          <button onClick={onCancel}
+            style={{padding:'7px 16px', background:'transparent', color:'#6B6488', fontSize:'12px', borderRadius:'6px', border:'0.5px solid rgba(30,27,46,0.15)', cursor:'pointer'}}>
+            Iptal
+          </button>
         </div>
       </div>
     </div>
@@ -162,31 +155,38 @@ export default function TezNotlari() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <BookOpen size={16} className="text-stone-600" />
-          <h2 className="text-base font-medium text-stone-800">Tez Notlari</h2>
-          <span className="text-xs px-2 py-0.5 bg-stone-100 text-stone-500 rounded-full">{notlar.length}</span>
+      <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'16px'}}>
+        <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
+          <BookOpen size={15} color="#534AB7" />
+          <h2 style={{fontSize:'15px', fontWeight:500, color:'#1E1B2E'}}>Tez Notlari</h2>
+          <span style={{fontSize:'11px', padding:'1px 8px', borderRadius:'10px', background:'rgba(30,27,46,0.07)', color:'#6B6488'}}>{notlar.length}</span>
         </div>
         <button onClick={() => setShowForm(s => !s)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-stone-800 text-white text-sm rounded-lg hover:bg-stone-700">
-          <Plus size={14} /> Not ekle
+          style={{display:'inline-flex', alignItems:'center', gap:'6px', padding:'7px 14px', background:'#3C3489', color:'#EAE8F5', fontSize:'12px', borderRadius:'6px', border:'none', cursor:'pointer'}}>
+          <Plus size={13} /> Not ekle
         </button>
       </div>
 
       {showForm && <NotEkleForm onAdd={addNot} onCancel={() => setShowForm(false)} />}
 
-      <div className="flex gap-2 mb-4 flex-wrap">
+      <div style={{display:'flex', gap:'6px', marginBottom:'16px', flexWrap:'wrap'}}>
         <button onClick={() => setKategoriFilter('')}
-          className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${!kategoriFilter ? 'bg-stone-800 text-white border-stone-800' : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'}`}>
+          style={{fontSize:'11px', padding:'4px 12px', borderRadius:'6px', border:'0.5px solid', cursor:'pointer',
+            background: !kategoriFilter ? '#3C3489' : 'transparent',
+            borderColor: !kategoriFilter ? '#3C3489' : 'rgba(30,27,46,0.15)',
+            color: !kategoriFilter ? '#EAE8F5' : '#6B6488'}}>
           Tumu
         </button>
         {KATEGORILER.map(k => {
           const count = notlar.filter(n => n.kategori === k).length
           if (count === 0) return null
+          const isActive = kategoriFilter === k
           return (
             <button key={k} onClick={() => setKategoriFilter(k)}
-              className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${kategoriFilter === k ? 'bg-stone-800 text-white border-stone-800' : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'}`}>
+              style={{fontSize:'11px', padding:'4px 12px', borderRadius:'6px', border:'0.5px solid', cursor:'pointer',
+                background: isActive ? '#3C3489' : 'transparent',
+                borderColor: isActive ? '#3C3489' : 'rgba(30,27,46,0.15)',
+                color: isActive ? '#EAE8F5' : '#6B6488'}}>
               {k} ({count})
             </button>
           )
@@ -194,16 +194,17 @@ export default function TezNotlari() {
       </div>
 
       {loading ? (
-        <p className="text-sm text-stone-400 text-center py-10">Yukleniyor...</p>
+        <p style={{fontSize:'12px', color:'#9B97B8', textAlign:'center', padding:'40px 0'}}>Yukleniyor...</p>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-16 text-stone-400">
-          <p className="text-sm">Henuz not eklenmedi.</p>
-          <button onClick={() => setShowForm(true)} className="mt-3 text-sm text-blue-600 hover:underline">
-            Ilk notu ekle
+        <div style={{textAlign:'center', padding:'60px 0', color:'#9B97B8'}}>
+          <p style={{fontSize:'13px'}}>Henuz not eklenmedi.</p>
+          <button onClick={() => setShowForm(true)}
+            style={{marginTop:'12px', fontSize:'12px', color:'#7F77DD', background:'none', border:'none', cursor:'pointer'}}>
+            Ilk notu ekle →
           </button>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div style={{display:'flex', flexDirection:'column', gap:'8px'}}>
           {filtered.map(not => (
             <NotKarti key={not.id} not={not} onDelete={handleDelete} />
           ))}

@@ -1,23 +1,23 @@
 import { useState } from 'react'
-import { Languages, Copy, Check, AlertCircle, Loader } from 'lucide-react'
+import { Loader, Copy, Check, AlertCircle } from 'lucide-react'
 import { getApiKey } from '../lib/storage'
 import { callClaude } from '../lib/claude'
 
-const SYSTEM = `Sen Osmanlı dönemi Fransızca arşiv belgelerini inceleyen bir tarih araştırmacısısın. 
-Görevin:
-1. Fransızca metni akıcı, akademik Türkçeye çevirmek
-2. Osmanlı bankacılık ve iktisat tarihi terminolojisini doğru kullanmak
-3. Çevirinin ardından kısa bir araştırma özeti eklemek
+const SYSTEM = `Sen Osmanli Bankasi arsiv belgelerini inceleyen bir tarih arastirmacisin. 
+Gorev:
+1. Fransizca metni akici, akademik Turkceye cevir
+2. Osmanli bankacilik ve iktisat tarihi terminolojisini dogru kullan
+3. Cevirinin ardindan kisa bir arastirma ozeti ekle
 
-Format (kesinlikle bu yapıyı kullan):
-## Çeviri
-[Türkçe çeviri buraya]
+Format (kesinlikle bu yapiyi kullan):
+## Ceviri
+[Turkce ceviri buraya]
 
-## Araştırma Özeti
-[Tez bağlamı için 3-5 cümle: belgenin içeriği, önemi, dikkat edilmesi gereken noktalar]
+## Arastirma Ozeti
+[Tez baglamı icin 3-5 cumle]
 
 ## Anahtar Kavramlar
-[Belgede geçen önemli isimler, kurumlar, miktarlar, tarihler — madde madde]`
+[Belgede gecen onemli isimler, kurumlar, miktarlar, tarihler]`
 
 export default function Translate({ initialText = '' }) {
   const [frText, setFrText] = useState(initialText)
@@ -28,7 +28,7 @@ export default function Translate({ initialText = '' }) {
 
   async function handleTranslate() {
     const key = getApiKey()
-    if (!key) { setError('Önce Ayarlar\'dan API anahtarını gir.'); return }
+    if (!key) { setError("Once Ayarlar'dan API anahtarini gir."); return }
     if (!frText.trim()) { setError('Metin giriniz.'); return }
     setError('')
     setLoading(true)
@@ -50,54 +50,54 @@ export default function Translate({ initialText = '' }) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <h2 className="text-base font-medium text-stone-800">Fransızca → Türkçe</h2>
-          <span className="text-xs px-2 py-0.5 bg-purple-50 text-purple-600 rounded-full font-medium">AI</span>
-        </div>
+      <div style={{display:'flex', alignItems:'center', gap:'8px', marginBottom:'16px'}}>
+        <h2 style={{fontSize:'15px', fontWeight:500, color:'#1E1B2E'}}>Fransizca → Turkce</h2>
+        <span style={{fontSize:'10px', padding:'2px 8px', borderRadius:'10px', background:'rgba(127,119,221,0.15)', color:'#534AB7', fontWeight:500}}>AI</span>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-medium text-stone-500">Fransızca metin</label>
+      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'16px'}}>
+        <div style={{display:'flex', flexDirection:'column', gap:'8px'}}>
+          <label style={{fontSize:'11px', fontWeight:500, color:'#6B6488'}}>Fransizca metin</label>
           <textarea
             value={frText}
             onChange={e => setFrText(e.target.value)}
             rows={14}
-            placeholder={"Belge metnini buraya yapıştırın...\n\nexemple:\nLa direction de la Banque Ottomane a décidé d'accorder un crédit de 50.000 francs..."}
-            className="flex-1 px-3 py-2.5 text-sm border border-stone-200 rounded-xl focus:outline-none focus:border-stone-400 resize-none font-mono leading-relaxed"
+            placeholder="Belge metnini buraya yapistirin..."
+            style={{flex:1, padding:'10px 12px', fontSize:'12px', border:'0.5px solid rgba(30,27,46,0.15)', borderRadius:'8px', background:'#F7F6FB', color:'#1E1B2E', resize:'none', fontFamily:'monospace', lineHeight:1.6, outline:'none'}}
           />
           <button
             onClick={handleTranslate}
             disabled={loading}
-            className="w-full py-2 bg-stone-800 text-white text-sm rounded-lg hover:bg-stone-700 disabled:opacity-50 flex items-center justify-center gap-2"
+            style={{padding:'8px', background: loading ? 'rgba(60,52,137,0.5)' : '#3C3489', color:'#EAE8F5', fontSize:'12px', borderRadius:'6px', border:'none', cursor: loading ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'6px'}}
           >
-            {loading ? <><Loader size={14} className="animate-spin" /> Çevriliyor...</> : <><Languages size={14} /> Çevir ve analiz et</>}
+            {loading ? <><Loader size={13} style={{animation:'spin 1s linear infinite'}} /> Cevriliyor...</> : 'Cevir ve analiz et'}
           </button>
           {error && (
-            <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-100 rounded-lg text-xs text-red-700">
-              <AlertCircle size={13} className="flex-shrink-0 mt-0.5" />
+            <div style={{display:'flex', alignItems:'flex-start', gap:'6px', padding:'10px', background:'rgba(162,45,45,0.06)', border:'0.5px solid rgba(162,45,45,0.15)', borderRadius:'6px', fontSize:'11px', color:'#A32D2D'}}>
+              <AlertCircle size={13} style={{flexShrink:0, marginTop:'1px'}} />
               {error}
             </div>
           )}
         </div>
 
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-medium text-stone-500">Türkçe çeviri + analiz</label>
+        <div style={{display:'flex', flexDirection:'column', gap:'8px'}}>
+          <div style={{display:'flex', alignItems:'center', justifyContent:'space-between'}}>
+            <label style={{fontSize:'11px', fontWeight:500, color:'#6B6488'}}>Turkce ceviri + analiz</label>
             {result && (
               <button onClick={handleCopy}
-                className="inline-flex items-center gap-1 text-xs text-stone-500 hover:text-stone-700">
+                style={{display:'inline-flex', alignItems:'center', gap:'4px', fontSize:'11px', color:'#9B97B8', background:'none', border:'none', cursor:'pointer'}}>
                 {copied ? <Check size={12} /> : <Copy size={12} />}
-                {copied ? 'Kopyalandı' : 'Kopyala'}
+                {copied ? 'Kopyalandi' : 'Kopyala'}
               </button>
             )}
           </div>
-          <div className="flex-1 px-3 py-2.5 text-sm border border-stone-200 rounded-xl bg-stone-50 min-h-64 leading-relaxed overflow-y-auto whitespace-pre-wrap">
-            {result || <span className="text-stone-400 text-xs">Çeviri burada görünecek...</span>}
+          <div style={{flex:1, minHeight:'300px', padding:'10px 12px', fontSize:'12px', border:'0.5px solid rgba(30,27,46,0.1)', borderRadius:'8px', background:'#F0EEF5', color:'#2E2A42', lineHeight:1.7, whiteSpace:'pre-wrap', overflowY:'auto'}}>
+            {result || <span style={{color:'#9B97B8'}}>Ceviri burada gorunecek...</span>}
           </div>
         </div>
       </div>
+
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   )
 }

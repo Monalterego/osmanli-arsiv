@@ -14,51 +14,54 @@ export default function Settings() {
   }
 
   return (
-    <div className="max-w-lg">
-      <h2 className="text-base font-medium text-stone-800 mb-1">Anthropic API Anahtarı</h2>
-      <p className="text-sm text-stone-500 mb-6">
-        Çeviri ve veri çıkarımı için gereklidir. Anahtar yalnızca tarayıcınızda saklanır.
+    <div style={{maxWidth:'480px'}}>
+      <h2 style={{fontSize:'15px', fontWeight:500, color:'#1E1B2E', marginBottom:'4px'}}>Anthropic API Anahtari</h2>
+      <p style={{fontSize:'12px', color:'#6B6488', marginBottom:'20px'}}>
+        Ceviri ve veri cikarimi icin gereklidir. Anahtar yalnizca tarayicinizda saklanir.
       </p>
-      <div className="mb-4">
-        <label className="block text-xs font-medium text-stone-500 mb-1.5">API Key</label>
-        <div className="flex gap-2">
-          <div className="relative flex-1">
+
+      <div style={{marginBottom:'16px'}}>
+        <label style={{display:'block', fontSize:'11px', fontWeight:500, color:'#6B6488', marginBottom:'6px'}}>API Key</label>
+        <div style={{display:'flex', gap:'8px'}}>
+          <div style={{position:'relative', flex:1}}>
             <input
               type={show ? 'text' : 'password'}
               value={key}
               onChange={e => setKey(e.target.value)}
               placeholder="sk-ant-..."
-              className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg bg-white focus:outline-none focus:border-stone-400 pr-10"
+              style={{width:'100%', padding:'8px 36px 8px 12px', fontSize:'13px', border:'0.5px solid rgba(30,27,46,0.2)', borderRadius:'6px', background:'#F7F6FB', color:'#1E1B2E', outline:'none'}}
             />
             <button
               onClick={() => setShow(s => !s)}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+              style={{position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'#9B97B8'}}
             >
               {show ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
           </div>
           <button
             onClick={handleSave}
-            className="px-4 py-2 bg-stone-800 text-white text-sm rounded-lg hover:bg-stone-700 flex items-center gap-2"
+            style={{padding:'8px 16px', background: saved ? '#27500A' : '#3C3489', color:'#EAE8F5', fontSize:'12px', borderRadius:'6px', border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:'6px', transition:'background 0.2s'}}
           >
-            {saved ? <CheckCircle size={14} /> : <Key size={14} />}
+            {saved ? <CheckCircle size={13} /> : <Key size={13} />}
             {saved ? 'Kaydedildi' : 'Kaydet'}
           </button>
         </div>
       </div>
-      <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg text-xs text-amber-800">
-        <p className="font-medium mb-1">API anahtarı nasıl alınır?</p>
-        <ol className="list-decimal list-inside space-y-1 text-amber-700">
+
+      <div style={{padding:'12px 16px', background:'rgba(127,119,221,0.07)', border:'0.5px solid rgba(127,119,221,0.2)', borderRadius:'8px', marginBottom:'16px'}}>
+        <p style={{fontSize:'11px', fontWeight:500, color:'#534AB7', marginBottom:'6px'}}>API anahtari nasil alinir?</p>
+        <ol style={{fontSize:'11px', color:'#6B6488', paddingLeft:'16px', lineHeight:2}}>
           <li>console.anthropic.com adresine git</li>
-          <li>Hesap oluştur veya giriş yap</li>
+          <li>Hesap olustur veya giris yap</li>
           <li>API Keys → Create Key</li>
-          <li>Anahtarı buraya yapıştır</li>
+          <li>Anahtari buraya yapistir</li>
         </ol>
       </div>
+
       {key && (
-        <div className="mt-4 flex items-center gap-2 text-xs text-emerald-700">
+        <div style={{display:'flex', alignItems:'center', gap:'6px', fontSize:'11px', color:'#3B6D11'}}>
           <CheckCircle size={13} />
-          API anahtarı mevcut — AI özellikleri aktif.
+          API anahtari mevcut — AI ozellikleri aktif.
         </div>
       )}
     </div>

@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
-import { Loader, FileText, CheckCircle, AlertCircle, X, Link, BookOpen } from 'lucide-react'
+import { Loader, FileText, CheckCircle, AlertCircle, X, BookOpen } from 'lucide-react'
 import { getApiKey, saveDoc, generateId } from '../lib/storage'
-import { analyzeDocument, callClaude } from '../lib/claude'
+import { analyzeDocument } from '../lib/claude'
 import { findBreadcrumb } from '../lib/archiveData'
 
 export default function Upload({ onDocumentAnalyzed }) {
@@ -11,25 +11,18 @@ export default function Upload({ onDocumentAnalyzed }) {
   const [queue, setQueue] = useState([])
   const [processing, setProcessing] = useState(false)
   const [error, setError] = useState('')
-
-  // Defter modu state
   const [defterAdi, setDefterAdi] = useState('')
   const [defterRows, setDefterRows] = useState([])
   const [defterProcessing, setDefterProcessing] = useState(false)
   const [defterDone, setDefterDone] = useState(false)
-
   const inputRef = useRef()
   const defterInputRef = useRef()
 
   function handleUrlSubmit() {
     const url = saltUrl.trim()
-    if (!url.includes('archives.saltresearch.org/handle/')) {
-      setError('Gecerli bir SALT URL girin.')
-      return
-    }
+    if (!url.includes('archives.saltresearch.org/handle/')) { setError('Gecerli bir SALT URL girin.'); return }
     setError('')
-    const breadcrumb = findBreadcrumb(url)
-    setSaltMeta({ url, breadcrumb })
+    setSaltMeta({ url, breadcrumb: findBreadcrumb(url) })
   }
 
   function fileToBase64(file) {
@@ -41,16 +34,12 @@ export default function Upload({ onDocumentAnalyzed }) {
     })
   }
 
-  // TEKİL MOD
   async function handleFiles(files) {
     const key = getApiKey()
     if (!key) { setError("Once Ayarlar'dan API anahtarini gir."); return }
     setError('')
     const newItems = Array.from(files).map(file => ({
-      file,
-      name: file.name,
-      status: 'bekliyor',
-      result: null,
+      file, name: file.name, status: 'bekliyor', result: null,
       preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
     }))
     setQueue(prev => [...prev, ...newItems])
@@ -64,9 +53,8 @@ export default function Upload({ onDocumentAnalyzed }) {
       setQueue(prev => prev.map((item, idx) => idx === i ? { ...item, status: 'isleniyor' } : item))
       try {
         const base64 = await fileToBase64(currentQueue[i].file)
-        const mimeType = currentQueue[i].file.type
         const context = saltMeta ? `Bu belge SALT Research arsivinde su klasorden alinmistir: ${saltMeta.url}` : ''
-        const result = await analyzeDocument(key, base64, mimeType, context)
+        const result = await analyzeDocument(key, base64, currentQueue[i].file.type, context)
         setQueue(prev => prev.map((item, idx) => idx === i ? { ...item, status: 'tamam', result } : item))
       } catch (err) {
         setQueue(prev => prev.map((item, idx) => idx === i ? { ...item, status: 'hata', error: err.message } : item))
@@ -77,9 +65,7 @@ export default function Upload({ onDocumentAnalyzed }) {
 
   async function saveAll() {
     const ready = queue.filter(item => item.status === 'tamam' && item.result)
-    for (const item of ready) {
-      await onDocumentAnalyzed(item.result, saltMeta?.breadcrumb || saltMeta?.url)
-    }
+    for (const item of ready) await onDocumentAnalyzed(item.result, saltMeta?.breadcrumb || saltMeta?.url)
     setQueue([])
   }
 
@@ -88,7 +74,6 @@ export default function Upload({ onDocumentAnalyzed }) {
     setQueue(prev => prev.filter(q => q !== item))
   }
 
-  // DEFTER MODU
   async function handleDefterFiles(files) {
     const key = getApiKey()
     if (!key) { setError("Once Ayarlar'dan API anahtarini gir."); return }
@@ -96,174 +81,102 @@ export default function Upload({ onDocumentAnalyzed }) {
     setError('')
     setDefterProcessing(true)
     setDefterDone(false)
-
     const fileList = Array.from(files)
-    const newRows = []
-
     for (const file of fileList) {
       try {
         const base64 = await fileToBase64(file)
-        const mimeType = file.type
         const context = saltMeta ? `Defter: ${defterAdi}. SALT klasoru: ${saltMeta.url}` : `Defter: ${defterAdi}`
-
-        const systemPrompt = `Sen Osmanli Bankasi defter ve kayit defterlerini analiz eden bir tarih veri analistisin.
-Bu bir defterin tek sayfasidir. Sayfadan yapisal veriyi cikart.
-SADECE JSON yaz, baska hicbir sey yazma:
-{
-  "sayfa_no": "sayfa veya folyo numarasi varsa",
-  "tarih": "YYYY-MM-DD veya YYYY formatinda",
-  "taraflar": ["isim1", "isim2"],
-  "mulk_veya_konu": "gayrimenkul adi, konu, islem tipi",
-  "lokasyon": "sehir veya adres",
-  "tutar": "miktar ve para birimi",
-  "notlar": "diger onemli bilgiler",
-  "orijinal_metin": "sayfadaki orijinal metnin tamami"
-}`
-
         const res = await fetch('https://api.anthropic.com/v1/messages', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': key,
-            'anthropic-version': '2023-06-01',
-            'anthropic-dangerous-direct-browser-access': 'true',
-          },
+          headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
           body: JSON.stringify({
-            model: 'claude-haiku-4-5-20251001',
-            max_tokens: 1000,
-            system: systemPrompt,
-            messages: [{
-              role: 'user',
-              content: [
-                { type: 'image', source: { type: 'base64', media_type: mimeType, data: base64 } },
-                { type: 'text', text: `${context}. Bu defter sayfasini analiz et.` }
-              ]
-            }]
+            model: 'claude-haiku-4-5-20251001', max_tokens: 1000,
+            system: `Sen Osmanli Bankasi defter sayfalarini analiz eden bir tarih veri analistisin. SADECE JSON yaz:\n{"sayfa_no":"...","tarih":"...","taraflar":["..."],"mulk_veya_konu":"...","lokasyon":"...","tutar":"...","notlar":"...","orijinal_metin":"..."}`,
+            messages: [{ role: 'user', content: [
+              { type: 'image', source: { type: 'base64', media_type: file.type, data: base64 } },
+              { type: 'text', text: `${context}. Bu defter sayfasini analiz et.` }
+            ]}]
           })
         })
-
         const data = await res.json()
-        const raw = data.content[0].text.replace(/```json|```/g, '').trim()
-        const parsed = JSON.parse(raw)
-        newRows.push({ dosya: file.name, ...parsed })
+        const parsed = JSON.parse(data.content[0].text.replace(/```json|```/g, '').trim())
         setDefterRows(prev => [...prev, { dosya: file.name, ...parsed }])
       } catch (err) {
-        newRows.push({ dosya: file.name, hata: err.message })
         setDefterRows(prev => [...prev, { dosya: file.name, hata: err.message }])
       }
     }
-
     setDefterProcessing(false)
     setDefterDone(true)
   }
 
   async function saveDefter() {
-    const key = getApiKey()
     const validRows = defterRows.filter(r => !r.hata)
-    const note = [
-      `DEFTER: ${defterAdi}`,
-      `SAYFA SAYISI: ${validRows.length}`,
-      ``,
-      `SAYFALAR:`,
-      ...validRows.map((r, i) => [
-        `--- Sayfa ${i + 1} (${r.dosya}) ---`,
-        r.tarih ? `Tarih: ${r.tarih}` : '',
-        r.taraflar?.length ? `Taraflar: ${r.taraflar.join(', ')}` : '',
-        r.mulk_veya_konu ? `Konu: ${r.mulk_veya_konu}` : '',
-        r.lokasyon ? `Lokasyon: ${r.lokasyon}` : '',
-        r.tutar ? `Tutar: ${r.tutar}` : '',
-        r.notlar ? `Notlar: ${r.notlar}` : '',
-        r.orijinal_metin ? `Orijinal: ${r.orijinal_metin}` : '',
+    const note = [`DEFTER: ${defterAdi}`, `SAYFA SAYISI: ${validRows.length}`, '',
+      ...validRows.map((r, i) => [`--- Sayfa ${i + 1} (${r.dosya}) ---`,
+        r.tarih ? `Tarih: ${r.tarih}` : '', r.taraflar?.length ? `Taraflar: ${r.taraflar.join(', ')}` : '',
+        r.mulk_veya_konu ? `Konu: ${r.mulk_veya_konu}` : '', r.lokasyon ? `Lokasyon: ${r.lokasyon}` : '',
+        r.tutar ? `Tutar: ${r.tutar}` : '', r.orijinal_metin ? `Orijinal: ${r.orijinal_metin}` : '',
       ].filter(Boolean).join('\n'))
     ].join('\n')
-
-    const doc = {
-      id: generateId(),
-      title: defterAdi,
-      dept: 'Real Estates Department',
-      type: 'Defter / Register',
-      date: validRows[0]?.tarih || '',
-      url: saltMeta?.url || '',
-      salt_klasor: saltMeta?.breadcrumb || saltMeta?.url || '',
-      tags: ['defter', 'gayrimenkul'],
-      note,
-    }
-
+    const doc = { id: generateId(), title: defterAdi, dept: 'Real Estates Department', type: 'Defter / Register',
+      date: validRows[0]?.tarih || '', url: saltMeta?.url || '', salt_klasor: saltMeta?.breadcrumb || saltMeta?.url || '',
+      tags: ['defter', 'gayrimenkul'], note }
     await saveDoc(doc)
-    setDefterRows([])
-    setDefterAdi('')
-    setDefterDone(false)
+    setDefterRows([]); setDefterAdi(''); setDefterDone(false)
     alert('Defter kaydedildi!')
   }
 
   function exportDefterCSV() {
-    const validRows = defterRows.filter(r => !r.hata)
-    const header = 'Dosya,Sayfa No,Tarih,Taraflar,Mulk/Konu,Lokasyon,Tutar,Notlar'
-    const rows = validRows.map(r =>
-      `"${r.dosya}","${r.sayfa_no || ''}","${r.tarih || ''}","${(r.taraflar || []).join('; ')}","${r.mulk_veya_konu || ''}","${r.lokasyon || ''}","${r.tutar || ''}","${r.notlar || ''}"`
-    )
-    const blob = new Blob([[header, ...rows].join('\n')], { type: 'text/csv;charset=utf-8' })
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = `${defterAdi || 'defter'}.csv`
-    a.click()
+    const rows = defterRows.filter(r => !r.hata).map(r =>
+      `"${r.dosya}","${r.sayfa_no||''}","${r.tarih||''}","${(r.taraflar||[]).join('; ')}","${r.mulk_veya_konu||''}","${r.lokasyon||''}","${r.tutar||''}","${r.notlar||''}"`)
+    const blob = new Blob([['Dosya,Sayfa No,Tarih,Taraflar,Mulk/Konu,Lokasyon,Tutar,Notlar', ...rows].join('\n')], { type: 'text/csv' })
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${defterAdi || 'defter'}.csv`; a.click()
   }
 
   const bekleyenler = queue.filter(q => q.status === 'bekliyor').length
   const tamamlananlar = queue.filter(q => q.status === 'tamam').length
   const hatalilar = queue.filter(q => q.status === 'hata').length
 
+  const inputStyle = {width:'100%', padding:'7px 10px', fontSize:'12px', border:'0.5px solid rgba(30,27,46,0.15)', borderRadius:'6px', background:'#F7F6FB', color:'#1E1B2E', outline:'none'}
+  const btnPrimary = {padding:'7px 14px', background:'#3C3489', color:'#EAE8F5', fontSize:'12px', borderRadius:'6px', border:'none', cursor:'pointer'}
+  const btnSecondary = {padding:'7px 14px', background:'transparent', color:'#6B6488', fontSize:'12px', borderRadius:'6px', border:'0.5px solid rgba(30,27,46,0.15)', cursor:'pointer'}
+
   return (
     <div>
-      <div className="flex items-center gap-2 mb-4">
-        <h2 className="text-base font-medium text-stone-800">Belge Yukle ve Analiz Et</h2>
-        <span className="text-xs px-2 py-0.5 bg-purple-50 text-purple-600 rounded-full font-medium">AI</span>
+      <div style={{display:'flex', alignItems:'center', gap:'8px', marginBottom:'16px'}}>
+        <h2 style={{fontSize:'15px', fontWeight:500, color:'#1E1B2E'}}>Belge Yukle ve Analiz Et</h2>
+        <span style={{fontSize:'10px', padding:'2px 8px', borderRadius:'10px', background:'rgba(127,119,221,0.15)', color:'#534AB7', fontWeight:500}}>AI</span>
       </div>
 
       {/* Mod secimi */}
-      <div className="flex gap-2 mb-4">
-        <button
-          onClick={() => setMode('tekil')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm border transition-colors ${
-            mode === 'tekil' ? 'bg-stone-800 text-white border-stone-800' : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
-          }`}
-        >
-          <FileText size={14} /> Tekil Belge
-        </button>
-        <button
-          onClick={() => setMode('defter')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm border transition-colors ${
-            mode === 'defter' ? 'bg-stone-800 text-white border-stone-800' : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
-          }`}
-        >
-          <BookOpen size={14} /> Defter Modu
-        </button>
+      <div style={{display:'flex', gap:'8px', marginBottom:'16px'}}>
+        {[['tekil', 'Tekil Belge'], ['defter', 'Defter Modu']].map(([id, label]) => (
+          <button key={id} onClick={() => setMode(id)}
+            style={{display:'flex', alignItems:'center', gap:'6px', padding:'7px 14px', fontSize:'12px', borderRadius:'6px', border:'0.5px solid', cursor:'pointer',
+              background: mode === id ? '#3C3489' : 'transparent',
+              borderColor: mode === id ? '#3C3489' : 'rgba(30,27,46,0.15)',
+              color: mode === id ? '#EAE8F5' : '#6B6488'}}>
+            {id === 'defter' ? <BookOpen size={13} /> : <FileText size={13} />} {label}
+          </button>
+        ))}
       </div>
 
       {/* SALT URL */}
-      <div className="bg-white border border-stone-200 rounded-xl p-4 mb-4">
-        <label className="block text-xs font-medium text-stone-500 mb-2">SALT Klasor URL</label>
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Link size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-400" />
-            <input
-              type="text"
-              value={saltUrl}
-              onChange={e => setSaltUrl(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleUrlSubmit()}
-              placeholder="https://archives.saltresearch.org/handle/..."
-              className="w-full pl-7 pr-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none focus:border-stone-400"
-            />
-          </div>
-          <button onClick={handleUrlSubmit} className="px-3 py-2 bg-stone-800 text-white text-sm rounded-lg hover:bg-stone-700">
-            Ayarla
-          </button>
+      <div style={{background:'#F7F6FB', border:'0.5px solid rgba(30,27,46,0.1)', borderRadius:'10px', padding:'14px', marginBottom:'16px'}}>
+        <label style={{display:'block', fontSize:'11px', fontWeight:500, color:'#6B6488', marginBottom:'6px'}}>SALT Klasor URL</label>
+        <div style={{display:'flex', gap:'8px'}}>
+          <input type="text" value={saltUrl} onChange={e => setSaltUrl(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleUrlSubmit()}
+            placeholder="https://archives.saltresearch.org/handle/..."
+            style={{...inputStyle, flex:1}} />
+          <button onClick={handleUrlSubmit} style={btnPrimary}>Ayarla</button>
         </div>
         {saltMeta && (
-          <div className="mt-2 flex items-center gap-2 text-xs text-emerald-700">
+          <div style={{display:'flex', alignItems:'center', gap:'6px', marginTop:'8px', fontSize:'11px', color:'#3B6D11'}}>
             <CheckCircle size={12} />
             {saltMeta.breadcrumb}
-            <button onClick={() => { setSaltMeta(null); setSaltUrl('') }} className="text-stone-400 hover:text-stone-600 ml-1">
+            <button onClick={() => { setSaltMeta(null); setSaltUrl('') }}
+              style={{background:'none', border:'none', cursor:'pointer', color:'#9B97B8', marginLeft:'4px'}}>
               <X size={12} />
             </button>
           </div>
@@ -271,93 +184,91 @@ SADECE JSON yaz, baska hicbir sey yazma:
       </div>
 
       {error && (
-        <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-100 rounded-xl text-xs text-red-700 mb-4">
-          <AlertCircle size={13} className="flex-shrink-0 mt-0.5" /> {error}
+        <div style={{display:'flex', alignItems:'flex-start', gap:'6px', padding:'10px', background:'rgba(162,45,45,0.06)', border:'0.5px solid rgba(162,45,45,0.15)', borderRadius:'6px', fontSize:'11px', color:'#A32D2D', marginBottom:'12px'}}>
+          <AlertCircle size={13} style={{flexShrink:0}} /> {error}
         </div>
       )}
 
       {/* TEKİL MOD */}
       {mode === 'tekil' && (
         <div>
-          <div
-            onDrop={e => { e.preventDefault(); handleFiles(e.dataTransfer.files) }}
-            onDragOver={e => e.preventDefault()}
-            onClick={() => inputRef.current.click()}
-            className="border-2 border-dashed border-stone-200 rounded-xl p-10 text-center cursor-pointer hover:border-stone-400 hover:bg-stone-50 transition-colors mb-4"
-          >
-            <FileText size={28} className="text-stone-300 mx-auto mb-3" />
-            <p className="text-sm font-medium text-stone-600">PDF veya gorsel surukle, ya da tikla</p>
-            <p className="text-xs text-stone-400 mt-1">Coklu secim desteklenir</p>
-            <input ref={inputRef} type="file" accept="image/*,.pdf" multiple className="hidden" onChange={e => handleFiles(e.target.files)} />
+          <div onDrop={e => { e.preventDefault(); handleFiles(e.dataTransfer.files) }}
+            onDragOver={e => e.preventDefault()} onClick={() => inputRef.current.click()}
+            style={{border:'1.5px dashed rgba(30,27,46,0.15)', borderRadius:'10px', padding:'40px', textAlign:'center', cursor:'pointer', marginBottom:'16px', background:'rgba(127,119,221,0.03)'}}>
+            <FileText size={28} color="rgba(30,27,46,0.2)" style={{margin:'0 auto 10px'}} />
+            <p style={{fontSize:'13px', fontWeight:500, color:'#4A4670'}}>PDF veya gorsel surukle, ya da tikla</p>
+            <p style={{fontSize:'11px', color:'#9B97B8', marginTop:'4px'}}>Coklu secim desteklenir</p>
+            <input ref={inputRef} type="file" accept="image/*,.pdf" multiple className="hidden" style={{display:'none'}} onChange={e => handleFiles(e.target.files)} />
           </div>
 
           {queue.length > 0 && (
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <span className="text-xs text-stone-500">{queue.length} dosya</span>
-                  {bekleyenler > 0 && <span className="text-xs px-2 py-0.5 bg-stone-100 text-stone-600 rounded-full">{bekleyenler} bekliyor</span>}
-                  {tamamlananlar > 0 && <span className="text-xs px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full">{tamamlananlar} tamam</span>}
-                  {hatalilar > 0 && <span className="text-xs px-2 py-0.5 bg-red-50 text-red-700 rounded-full">{hatalilar} hata</span>}
+              <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'10px'}}>
+                <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
+                  <span style={{fontSize:'11px', color:'#6B6488'}}>{queue.length} dosya</span>
+                  {bekleyenler > 0 && <span style={{fontSize:'10px', padding:'1px 8px', borderRadius:'10px', background:'rgba(30,27,46,0.07)', color:'#6B6488'}}>{bekleyenler} bekliyor</span>}
+                  {tamamlananlar > 0 && <span style={{fontSize:'10px', padding:'1px 8px', borderRadius:'10px', background:'rgba(61,100,34,0.1)', color:'#3B6D11'}}>{tamamlananlar} tamam</span>}
+                  {hatalilar > 0 && <span style={{fontSize:'10px', padding:'1px 8px', borderRadius:'10px', background:'rgba(162,45,45,0.1)', color:'#A32D2D'}}>{hatalilar} hata</span>}
                 </div>
-                <div className="flex gap-2">
+                <div style={{display:'flex', gap:'6px'}}>
                   {bekleyenler > 0 && !processing && (
-                    <button onClick={() => processQueue(queue)} className="px-3 py-1.5 bg-stone-800 text-white text-xs rounded-lg hover:bg-stone-700">
-                      {bekleyenler} belgeyi analiz et
-                    </button>
+                    <button onClick={() => processQueue(queue)} style={btnPrimary}>{bekleyenler} belgeyi analiz et</button>
                   )}
                   {processing && (
-                    <div className="flex items-center gap-2 text-xs text-purple-600">
-                      <Loader size={13} className="animate-spin" /> Analiz ediliyor...
+                    <div style={{display:'flex', alignItems:'center', gap:'6px', fontSize:'11px', color:'#534AB7'}}>
+                      <Loader size={13} style={{animation:'spin 1s linear infinite'}} /> Analiz ediliyor...
                     </div>
                   )}
                   {tamamlananlar > 0 && !processing && (
-                    <button onClick={saveAll} className="px-3 py-1.5 bg-emerald-600 text-white text-xs rounded-lg hover:bg-emerald-700">
+                    <button onClick={saveAll}
+                      style={{...btnPrimary, background:'#27500A'}}>
                       Tumunu kaydet ({tamamlananlar})
                     </button>
                   )}
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div style={{display:'flex', flexDirection:'column', gap:'6px'}}>
                 {queue.map((item, idx) => (
-                  <div key={idx} className="bg-white border border-stone-200 rounded-xl overflow-hidden">
-                    <div className="flex items-center gap-3 px-4 py-3">
-                      {item.preview && <img src={item.preview} alt="" className="w-10 h-10 object-cover rounded-lg flex-shrink-0" />}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-stone-700 truncate">{item.name}</p>
-                        {item.result && <p className="text-xs text-stone-400 truncate">{item.result.title}</p>}
+                  <div key={idx} style={{background:'#F7F6FB', border:'0.5px solid rgba(30,27,46,0.1)', borderRadius:'8px', overflow:'hidden'}}>
+                    <div style={{display:'flex', alignItems:'center', gap:'10px', padding:'10px 14px'}}>
+                      {item.preview && <img src={item.preview} alt="" style={{width:'36px', height:'36px', objectFit:'cover', borderRadius:'6px', flexShrink:0}} />}
+                      <div style={{flex:1, minWidth:0}}>
+                        <p style={{fontSize:'12px', color:'#1E1B2E', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{item.name}</p>
+                        {item.result && <p style={{fontSize:'10px', color:'#9B97B8', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{item.result.title_tr || item.result.title}</p>}
                       </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        {item.status === 'bekliyor' && <span className="text-xs text-stone-400">Bekliyor</span>}
-                        {item.status === 'isleniyor' && <Loader size={14} className="animate-spin text-purple-500" />}
+                      <div style={{display:'flex', alignItems:'center', gap:'8px', flexShrink:0}}>
+                        {item.status === 'bekliyor' && <span style={{fontSize:'11px', color:'#9B97B8'}}>Bekliyor</span>}
+                        {item.status === 'isleniyor' && <Loader size={14} color="#7F77DD" style={{animation:'spin 1s linear infinite'}} />}
                         {item.status === 'tamam' && (
                           <>
-                            <CheckCircle size={14} className="text-emerald-500" />
-                            <button onClick={() => saveOne(item)} className="text-xs px-2 py-1 bg-stone-800 text-white rounded-md hover:bg-stone-700">Kaydet</button>
+                            <CheckCircle size={14} color="#3B6D11" />
+                            <button onClick={() => saveOne(item)}
+                              style={{fontSize:'11px', padding:'3px 10px', background:'#3C3489', color:'#EAE8F5', borderRadius:'4px', border:'none', cursor:'pointer'}}>
+                              Kaydet
+                            </button>
                           </>
                         )}
-                        {item.status === 'hata' && <span className="text-xs text-red-500">Hata</span>}
-                        <button onClick={() => setQueue(prev => prev.filter((_, i) => i !== idx))} className="text-stone-300 hover:text-stone-500">
+                        {item.status === 'hata' && <span style={{fontSize:'11px', color:'#A32D2D'}}>Hata</span>}
+                        <button onClick={() => setQueue(prev => prev.filter((_, i) => i !== idx))}
+                          style={{background:'none', border:'none', cursor:'pointer', color:'rgba(30,27,46,0.3)'}}>
                           <X size={14} />
                         </button>
                       </div>
                     </div>
                     {item.status === 'tamam' && item.result && (
-                      <div className="border-t border-stone-100 px-4 py-3 bg-stone-50">
-                        <div className="flex flex-wrap gap-1.5">
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">{item.result.dept}</span>
-                          {item.result.date && <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">{item.result.date}</span>}
-                          {item.result.tags?.slice(0, 4).map(t => (
-                            <span key={t} className="text-xs px-2 py-0.5 rounded-full bg-stone-100 text-stone-600">{t}</span>
-                          ))}
+                      <div style={{borderTop:'0.5px solid rgba(30,27,46,0.07)', padding:'8px 14px', background:'rgba(127,119,221,0.03)'}}>
+                        <div style={{display:'flex', flexWrap:'wrap', gap:'4px'}}>
+                          <span style={{fontSize:'10px', padding:'1px 6px', borderRadius:'4px', background:'rgba(30,27,46,0.07)', color:'#3C3489'}}>{item.result.dept}</span>
+                          {item.result.date && <span style={{fontSize:'10px', padding:'1px 6px', borderRadius:'4px', background:'rgba(61,100,34,0.08)', color:'#3B6D11'}}>{item.result.date}</span>}
+                          {item.result.tags?.slice(0, 3).map(t => <span key={t} style={{fontSize:'10px', padding:'1px 6px', borderRadius:'4px', background:'rgba(30,27,46,0.05)', color:'#6B6488'}}>{t}</span>)}
                         </div>
-                        {item.result.summary_tr && <p className="text-xs text-stone-500 mt-2 line-clamp-2">{item.result.summary_tr}</p>}
+                        {item.result.summary_tr && <p style={{fontSize:'11px', color:'#4A4670', marginTop:'6px', lineHeight:1.5, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden'}}>{item.result.summary_tr}</p>}
                       </div>
                     )}
                     {item.status === 'hata' && (
-                      <div className="border-t border-red-100 px-4 py-2 bg-red-50">
-                        <p className="text-xs text-red-600">{item.error}</p>
+                      <div style={{borderTop:'0.5px solid rgba(162,45,45,0.15)', padding:'6px 14px', background:'rgba(162,45,45,0.04)'}}>
+                        <p style={{fontSize:'11px', color:'#A32D2D'}}>{item.error}</p>
                       </div>
                     )}
                   </div>
@@ -371,75 +282,59 @@ SADECE JSON yaz, baska hicbir sey yazma:
       {/* DEFTER MODU */}
       {mode === 'defter' && (
         <div>
-          <div className="bg-white border border-stone-200 rounded-xl p-4 mb-4">
-            <label className="block text-xs font-medium text-stone-500 mb-2">Defter adi *</label>
-            <input
-              type="text"
-              value={defterAdi}
-              onChange={e => setDefterAdi(e.target.value)}
+          <div style={{background:'#F7F6FB', border:'0.5px solid rgba(30,27,46,0.1)', borderRadius:'10px', padding:'14px', marginBottom:'16px'}}>
+            <label style={{display:'block', fontSize:'11px', fontWeight:500, color:'#6B6488', marginBottom:'6px'}}>Defter adi *</label>
+            <input type="text" value={defterAdi} onChange={e => setDefterAdi(e.target.value)}
               placeholder="ornek: Grand livre des immeubles, 1884-1888"
-              className="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none focus:border-stone-400"
-            />
+              style={inputStyle} />
           </div>
 
-          <div
-            onDrop={e => { e.preventDefault(); handleDefterFiles(e.dataTransfer.files) }}
-            onDragOver={e => e.preventDefault()}
-            onClick={() => defterInputRef.current.click()}
-            className="border-2 border-dashed border-amber-200 rounded-xl p-10 text-center cursor-pointer hover:border-amber-400 hover:bg-amber-50 transition-colors mb-4"
-          >
-            <BookOpen size={28} className="text-amber-300 mx-auto mb-3" />
-            <p className="text-sm font-medium text-stone-600">Defter sayfalarini surukle veya tikla</p>
-            <p className="text-xs text-stone-400 mt-1">Her sayfadan tarih, taraf, tutar, lokasyon otomatik cikarilir</p>
-            <input ref={defterInputRef} type="file" accept="image/*,.pdf" multiple className="hidden" onChange={e => handleDefterFiles(e.target.files)} />
+          <div onDrop={e => { e.preventDefault(); handleDefterFiles(e.dataTransfer.files) }}
+            onDragOver={e => e.preventDefault()} onClick={() => defterInputRef.current.click()}
+            style={{border:'1.5px dashed rgba(186,117,23,0.3)', borderRadius:'10px', padding:'40px', textAlign:'center', cursor:'pointer', marginBottom:'16px', background:'rgba(186,117,23,0.03)'}}>
+            <BookOpen size={28} color="rgba(186,117,23,0.4)" style={{margin:'0 auto 10px'}} />
+            <p style={{fontSize:'13px', fontWeight:500, color:'#4A3520'}}>Defter sayfalarini surukle veya tikla</p>
+            <p style={{fontSize:'11px', color:'#9B97B8', marginTop:'4px'}}>Her sayfadan tarih, taraf, tutar, lokasyon otomatik cikarilir</p>
+            <input ref={defterInputRef} type="file" accept="image/*,.pdf" multiple style={{display:'none'}} onChange={e => handleDefterFiles(e.target.files)} />
           </div>
 
           {defterProcessing && (
-            <div className="flex items-center gap-3 p-4 bg-amber-50 border border-amber-100 rounded-xl mb-4">
-              <Loader size={16} className="animate-spin text-amber-600" />
+            <div style={{display:'flex', alignItems:'center', gap:'10px', padding:'14px', background:'rgba(186,117,23,0.07)', border:'0.5px solid rgba(186,117,23,0.2)', borderRadius:'8px', marginBottom:'12px'}}>
+              <Loader size={15} color="#854F0B" style={{animation:'spin 1s linear infinite'}} />
               <div>
-                <p className="text-sm font-medium text-amber-800">Defter sayfalari isleniyor...</p>
-                <p className="text-xs text-amber-600">{defterRows.length} sayfa tamamlandi</p>
+                <p style={{fontSize:'12px', fontWeight:500, color:'#854F0B'}}>Defter sayfalari isleniyor...</p>
+                <p style={{fontSize:'11px', color:'#A08060'}}>{defterRows.length} sayfa tamamlandi</p>
               </div>
             </div>
           )}
 
           {defterRows.length > 0 && (
-            <div className="bg-white border border-stone-200 rounded-xl overflow-hidden mb-4">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-stone-100">
-                <span className="text-sm font-medium text-stone-800">{defterRows.filter(r => !r.hata).length} sayfa islendi</span>
-                <div className="flex gap-2">
-                  <button onClick={exportDefterCSV} className="px-3 py-1.5 border border-stone-200 text-stone-600 text-xs rounded-lg hover:bg-stone-50">
-                    CSV indir
-                  </button>
-                  {defterDone && (
-                    <button onClick={saveDefter} className="px-3 py-1.5 bg-stone-800 text-white text-xs rounded-lg hover:bg-stone-700">
-                      Defter olarak kaydet
-                    </button>
-                  )}
+            <div style={{background:'#F7F6FB', border:'0.5px solid rgba(30,27,46,0.1)', borderRadius:'10px', overflow:'hidden'}}>
+              <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 16px', borderBottom:'0.5px solid rgba(30,27,46,0.07)'}}>
+                <span style={{fontSize:'12px', fontWeight:500, color:'#1E1B2E'}}>{defterRows.filter(r => !r.hata).length} sayfa islendi</span>
+                <div style={{display:'flex', gap:'6px'}}>
+                  <button onClick={exportDefterCSV} style={btnSecondary}>CSV indir</button>
+                  {defterDone && <button onClick={saveDefter} style={btnPrimary}>Defter olarak kaydet</button>}
                 </div>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs">
+              <div style={{overflowX:'auto'}}>
+                <table style={{width:'100%', fontSize:'11px', borderCollapse:'collapse'}}>
                   <thead>
-                    <tr className="border-b border-stone-100">
-                      <th className="text-left px-3 py-2 text-stone-400 font-medium">Dosya</th>
-                      <th className="text-left px-3 py-2 text-stone-400 font-medium">Tarih</th>
-                      <th className="text-left px-3 py-2 text-stone-400 font-medium">Taraflar</th>
-                      <th className="text-left px-3 py-2 text-stone-400 font-medium">Konu</th>
-                      <th className="text-left px-3 py-2 text-stone-400 font-medium">Lokasyon</th>
-                      <th className="text-left px-3 py-2 text-stone-400 font-medium">Tutar</th>
+                    <tr style={{borderBottom:'0.5px solid rgba(30,27,46,0.08)'}}>
+                      {['Dosya','Tarih','Taraflar','Konu','Lokasyon','Tutar'].map(h => (
+                        <th key={h} style={{textAlign:'left', padding:'8px 12px', fontSize:'10px', fontWeight:500, color:'#9B97B8'}}>{h}</th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
                     {defterRows.map((row, i) => (
-                      <tr key={i} className="border-b border-stone-50 hover:bg-stone-50">
-                        <td className="px-3 py-2 text-stone-500 max-w-24 truncate">{row.dosya}</td>
-                        <td className="px-3 py-2 text-stone-700">{row.hata ? <span className="text-red-500">Hata</span> : row.tarih || '-'}</td>
-                        <td className="px-3 py-2 text-stone-700">{row.taraflar?.join(', ') || '-'}</td>
-                        <td className="px-3 py-2 text-stone-700 max-w-40 truncate">{row.mulk_veya_konu || '-'}</td>
-                        <td className="px-3 py-2 text-stone-700">{row.lokasyon || '-'}</td>
-                        <td className="px-3 py-2 text-stone-700">{row.tutar || '-'}</td>
+                      <tr key={i} style={{borderBottom:'0.5px solid rgba(30,27,46,0.05)'}}>
+                        <td style={{padding:'7px 12px', color:'#6B6488', maxWidth:'100px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{row.dosya}</td>
+                        <td style={{padding:'7px 12px', color:'#1E1B2E'}}>{row.hata ? <span style={{color:'#A32D2D'}}>Hata</span> : row.tarih || '-'}</td>
+                        <td style={{padding:'7px 12px', color:'#1E1B2E'}}>{row.taraflar?.join(', ') || '-'}</td>
+                        <td style={{padding:'7px 12px', color:'#1E1B2E', maxWidth:'160px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{row.mulk_veya_konu || '-'}</td>
+                        <td style={{padding:'7px 12px', color:'#1E1B2E'}}>{row.lokasyon || '-'}</td>
+                        <td style={{padding:'7px 12px', color:'#1E1B2E'}}>{row.tutar || '-'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -449,6 +344,8 @@ SADECE JSON yaz, baska hicbir sey yazma:
           )}
         </div>
       )}
+
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   )
 }
