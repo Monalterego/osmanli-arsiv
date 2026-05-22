@@ -57,7 +57,7 @@ Belgeyi inceleyip asagidaki JSON formatinda yanit ver. SADECE JSON yaz, baska hi
     "tarihler": ["tarih1"]
   },
   "research_note": "Tez icin onemi ve kullanim onerileri",
-  "original_text": "Belgedeki orijinal metnin tamami, hic degistirmeden"
+  "original_text": "belgedeki TUM metnin kelimesi kelimesine transkripsiyonu, hicbir sey atlama, bastan sona tüm satirlar dahil",
 }`,
       messages: [
         {
