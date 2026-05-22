@@ -224,8 +224,8 @@ function DeptFilterPanel({ docs, deptFilter, setDeptFilter, klasorFilter, setKla
           const isActive = deptFilter === dept.name
 
           const deptKlasorler = Object.keys(klasorCounts).filter(k =>
-            k.startsWith(dept.name)
-          )
+  k.includes(dept.name) || k.startsWith(dept.name)
+)
 
           return (
             <div key={dept.name} className="border-b border-stone-100 last:border-0">
