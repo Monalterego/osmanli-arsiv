@@ -49,3 +49,26 @@ export function saveApiKey(key) {
 export function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2)
 }
+
+export async function getTezNotlari() {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/tez_notlari?order=created_at.desc`, {
+    headers: HEADERS,
+  })
+  if (!res.ok) return []
+  return await res.json()
+}
+
+export async function saveTezNotu(not) {
+  await fetch(`${SUPABASE_URL}/rest/v1/tez_notlari`, {
+    method: 'POST',
+    headers: { ...HEADERS, 'Prefer': 'resolution=merge-duplicates' },
+    body: JSON.stringify(not),
+  })
+}
+
+export async function deleteTezNotu(id) {
+  await fetch(`${SUPABASE_URL}/rest/v1/tez_notlari?id=eq.${id}`, {
+    method: 'DELETE',
+    headers: HEADERS,
+  })
+}

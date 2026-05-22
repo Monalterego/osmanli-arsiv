@@ -7,6 +7,7 @@ import Archive from './components/Archive'
 import Settings from './components/Settings'
 import Upload from './components/Uploads'
 import { getDocs, saveDoc, generateId } from './lib/storage'
+import TezNotlari from './components/TezNotlari'
 
 const NAV = [
   { id: 'yukle', label: 'Belge Yukle', icon: UploadIcon },
@@ -14,6 +15,7 @@ const NAV = [
   { id: 'ceviri', label: 'Ceviri', icon: Languages },
   { id: 'veri', label: 'Veri Cikarimi', icon: Database },
   { id: 'arsiv', label: 'Arsiv Yapisi', icon: FolderOpen },
+  { id: 'tez', label: 'Tez Notlari', icon: BookOpen },
   { id: 'ayarlar', label: 'Ayarlar', icon: SettingsIcon },
 ]
 
@@ -117,6 +119,7 @@ export default function App() {
               {tab === 'veri' && <Extract key={extractText} initialText={extractText} />}
               {tab === 'arsiv' && <Archive />}
               {tab === 'ayarlar' && <Settings />}
+              {tab === 'tez' && <TezNotlari />}
             </>
           )}
         </main>
