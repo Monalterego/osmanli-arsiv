@@ -3,6 +3,7 @@ import { Loader, FileText, CheckCircle, AlertCircle, X, BookOpen } from 'lucide-
 import { getApiKey, saveDoc, generateId } from '../lib/storage'
 import { analyzeDocument } from '../lib/claude'
 import { findBreadcrumb } from '../lib/archiveData'
+import { findBreadcrumb, ARCHIVE_STRUCTURE } from '../lib/archiveData'
 
 export default function Upload({ onDocumentAnalyzed }) {
   const [mode, setMode] = useState('tekil')
@@ -161,27 +162,37 @@ export default function Upload({ onDocumentAnalyzed }) {
         ))}
       </div>
 
-      {/* SALT URL */}
-      <div style={{background:'#F7F6FB', border:'0.5px solid rgba(30,27,46,0.1)', borderRadius:'10px', padding:'14px', marginBottom:'16px'}}>
-        <label style={{display:'block', fontSize:'11px', fontWeight:500, color:'#6B6488', marginBottom:'6px'}}>SALT Klasor URL</label>
-        <div style={{display:'flex', gap:'8px'}}>
-          <input type="text" value={saltUrl} onChange={e => setSaltUrl(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleUrlSubmit()}
-            placeholder="https://archives.saltresearch.org/handle/..."
-            style={{...inputStyle, flex:1}} />
-          <button onClick={handleUrlSubmit} style={btnPrimary}>Ayarla</button>
-        </div>
-        {saltMeta && (
-          <div style={{display:'flex', alignItems:'center', gap:'6px', marginTop:'8px', fontSize:'11px', color:'#3B6D11'}}>
-            <CheckCircle size={12} />
-            {saltMeta.breadcrumb}
-            <button onClick={() => { setSaltMeta(null); setSaltUrl('') }}
-              style={{background:'none', border:'none', cursor:'pointer', color:'#9B97B8', marginLeft:'4px'}}>
-              <X size={12} />
-            </button>
-          </div>
-        )}
-      </div>
+      {/* SALT Klasor Secimi */}
+<div style={{background:'#F7F6FB', border:'0.5px solid rgba(30,27,46,0.1)', borderRadius:'10px', padding:'14px', marginBottom:'16px'}}>
+  <label style={{display:'block', fontSize:'11px', fontWeight:500, color:'#6B6488', marginBottom:'6px'}}>
+    SALT Klasoru (opsiyonel)
+  </label>
+  <select
+    value={saltUrl}
+    onChange={e => {
+      setSaltUrl(e.target.value)
+      if (e.target.value) setSaltMeta({ url: e.target.value, breadcrumb: findBreadcrumb(e.target.value) })
+      else setSaltMeta(null)
+    }}
+    style={{width:'100%', padding:'7px 10px', fontSize:'12px', border:'0.5px solid rgba(30,27,46,0.15)', borderRadius:'6px', background:'#F0EEF5', color:'#1E1B2E', outline:'none'}}
+  >
+    <option value="">Klasor secin...</option>
+    {ARCHIVE_STRUCTURE.map(dept => (
+      <optgroup key={dept.url} label={dept.name}>
+        <option value={dept.url}>{dept.name}</option>
+        {(dept.children || []).map(child => (
+          <option key={child.url} value={child.url}>— {child.name}</option>
+        ))}
+      </optgroup>
+    ))}
+  </select>
+  {saltMeta && (
+    <div style={{display:'flex', alignItems:'center', gap:'6px', marginTop:'8px', fontSize:'11px', color:'#3B6D11'}}>
+      <CheckCircle size={12} />
+      {saltMeta.breadcrumb}
+    </div>
+  )}
+</div>
 
       {error && (
         <div style={{display:'flex', alignItems:'flex-start', gap:'6px', padding:'10px', background:'rgba(162,45,45,0.06)', border:'0.5px solid rgba(162,45,45,0.15)', borderRadius:'6px', fontSize:'11px', color:'#A32D2D', marginBottom:'12px'}}>
