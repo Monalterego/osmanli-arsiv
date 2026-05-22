@@ -4,85 +4,107 @@ import { generateId, saveDoc, deleteDoc } from '../lib/storage'
 import { ARCHIVE_STRUCTURE, DOC_TYPES, THESIS_TAGS } from '../lib/archiveData'
 
 function DocCard({ doc, onDelete, onTranslate, onExtract }) {
-  const [expanded, setExpanded] = useState(false)
+  const [open, setOpen] = useState(false)
 
   return (
-    <div className="bg-white border border-stone-200 rounded-xl p-4 hover:border-stone-300 transition-colors">
-      <div className="flex items-start gap-3">
-        <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-          <Tag size={14} className="text-blue-600" />
+    <div className="bg-white border border-stone-200 rounded-xl hover:border-stone-300 transition-colors">
+      {/* Kapalı görünüm - her zaman görünür */}
+      <div
+        className="flex items-center gap-3 px-4 py-3 cursor-pointer"
+        onClick={() => setOpen(o => !o)}
+      >
+        <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+          <Tag size={13} className="text-blue-600" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-stone-800 leading-snug">{doc.title_tr || doc.title}</p>
-{doc.title_original && doc.title_original !== doc.title_tr && (
-  <p className="text-xs text-stone-400 mt-0.5 italic">{doc.title_original}</p>
-)}
-          <div className="flex flex-wrap gap-1.5 mt-2">
-            <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">{doc.dept}</span>
-            {doc.date && <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">{doc.date}</span>}
-            {doc.type && <span className="text-xs px-2 py-0.5 rounded-full bg-purple-50 text-purple-700">{doc.type}</span>}
-            {doc.tags?.map(t => (
-              <span key={t} className="text-xs px-2 py-0.5 rounded-full bg-stone-100 text-stone-600">{t}</span>
-            ))}
+          <p className="text-sm font-medium text-stone-800 truncate">{doc.title_tr || doc.title}</p>
+          {doc.title_original && doc.title_original !== (doc.title_tr || doc.title) && (
+            <p className="text-xs text-stone-400 italic truncate">{doc.title_original}</p>
+          )}
+          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+            <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-700">{doc.dept}</span>
+            {doc.date && <span className="text-xs px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700">{doc.date}</span>}
             {doc.salt_klasor && (
-              <button onClick={() => window.open(doc.salt_klasor.startsWith('http') ? doc.salt_klasor : '#', '_blank')}
-                className="text-xs px-2 py-0.5 rounded-full bg-stone-800 text-white hover:bg-stone-600">
-                SALT
-              </button>
+              <span className="text-xs text-stone-400 truncate max-w-xs">
+                {doc.salt_klasor.split(' > ').slice(-1)[0]}
+              </span>
             )}
           </div>
-          {doc.note && (
-            <div className="mt-2 space-y-2">
-              {doc.note.split('\n\n').map((block, i) => {
-                const isOzet = block.startsWith('OZET:')
-                const isCeviri = block.startsWith('CEVIRI:')
-                const isNot = block.startsWith('ARASTIRMA NOTU:')
-                const isOrijinal = block.startsWith('ORIJINAL METIN:')
-                if (!expanded && i > 0) return null
-                return (
-                  <div key={i} className={`text-xs rounded-lg p-2 ${
-                    isOzet ? 'bg-blue-50 text-blue-800' :
-                    isCeviri ? 'bg-stone-50 text-stone-700' :
-                    isNot ? 'bg-amber-50 text-amber-800' :
-                    isOrijinal ? 'bg-stone-100 text-stone-600 font-mono' :
-                    'text-stone-500'
-                  }`}>
-                    <span className="font-medium block mb-0.5">
-                      {isOzet ? 'Ozet' : isCeviri ? 'Ceviri' : isNot ? 'Arastirma notu' : isOrijinal ? 'Orijinal metin' : ''}
-                    </span>
-                    <span className="leading-relaxed">{block.replace(/^(OZET|CEVIRI|ARASTIRMA NOTU|ORIJINAL METIN):/, '').trim()}</span>
-                  </div>
-                )
-              })}
-              {doc.note.split('\n\n').length > 1 && (
-                <button onClick={() => setExpanded(e => !e)} className="text-xs text-stone-400 hover:text-stone-600 flex items-center gap-0.5">
-                  {expanded ? <><ChevronUp size={12} /> Kapat</> : <><ChevronDown size={12} /> Tamamini goster</>}
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {doc.tags?.slice(0, 2).map(t => (
+            <span key={t} className="text-xs px-1.5 py-0.5 rounded-full bg-stone-100 text-stone-500 hidden sm:inline">{t}</span>
+          ))}
+          {open ? <ChevronUp size={14} className="text-stone-400" /> : <ChevronDown size={14} className="text-stone-400" />}
+        </div>
+      </div>
+
+      {/* Açık görünüm */}
+      {open && (
+        <div className="border-t border-stone-100 px-4 py-3 space-y-2">
+          {/* Tüm etiketler */}
+          {doc.tags?.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {doc.tags.map(t => (
+                <span key={t} className="text-xs px-2 py-0.5 rounded-full bg-stone-100 text-stone-600">{t}</span>
+              ))}
+              {doc.type && <span className="text-xs px-2 py-0.5 rounded-full bg-purple-50 text-purple-700">{doc.type}</span>}
+              {doc.salt_klasor && (
+                <button
+                  onClick={e => { e.stopPropagation(); window.open(doc.url || '#', '_blank') }}
+                  className="text-xs px-2 py-0.5 rounded-full bg-stone-800 text-white hover:bg-stone-600"
+                >
+                  SALT
                 </button>
               )}
             </div>
           )}
-          <div className="flex gap-2 mt-3 flex-wrap">
+
+          {/* İçerik blokları */}
+          {doc.note && doc.note.split('\n\n').map((block, i) => {
+            const isOzet = block.startsWith('OZET:')
+            const isCeviri = block.startsWith('CEVIRI:')
+            const isNot = block.startsWith('ARASTIRMA NOTU:')
+            const isOrijinal = block.startsWith('ORIJINAL METIN:')
+            return (
+              <div key={i} className={`text-xs rounded-lg p-2.5 ${
+                isOzet ? 'bg-blue-50 text-blue-800' :
+                isCeviri ? 'bg-stone-50 text-stone-700' :
+                isNot ? 'bg-amber-50 text-amber-800' :
+                isOrijinal ? 'bg-stone-100 text-stone-600 font-mono' :
+                'text-stone-500'
+              }`}>
+                <span className="font-medium block mb-0.5 text-xs opacity-70">
+                  {isOzet ? 'Ozet' : isCeviri ? 'Ceviri' : isNot ? 'Arastirma notu' : isOrijinal ? 'Orijinal metin' : ''}
+                </span>
+                <span className="leading-relaxed">{block.replace(/^(OZET|CEVIRI|ARASTIRMA NOTU|ORIJINAL METIN):/, '').trim()}</span>
+              </div>
+            )
+          })}
+
+          {/* Aksiyon butonları */}
+          <div className="flex gap-2 pt-1">
             {doc.url && (
-              <button onClick={() => window.open(doc.url, '_blank')}
+              <button onClick={e => { e.stopPropagation(); window.open(doc.url, '_blank') }}
                 className="inline-flex items-center gap-1 text-xs px-2.5 py-1 border border-stone-200 rounded-md hover:bg-stone-50 text-stone-600">
                 <ExternalLink size={11} /> SALT
               </button>
             )}
-            <button onClick={() => onTranslate(doc)}
+            <button onClick={e => { e.stopPropagation(); onTranslate(doc) }}
               className="inline-flex items-center gap-1 text-xs px-2.5 py-1 border border-stone-200 rounded-md hover:bg-stone-50 text-stone-600">
               <Languages size={11} /> Cevir
             </button>
-            <button onClick={() => onExtract(doc)}
+            <button onClick={e => { e.stopPropagation(); onExtract(doc) }}
               className="inline-flex items-center gap-1 text-xs px-2.5 py-1 border border-stone-200 rounded-md hover:bg-stone-50 text-stone-600">
               <Database size={11} /> Veri cikar
             </button>
-            <button onClick={() => onDelete(doc.id)}
+            <button onClick={e => { e.stopPropagation(); onDelete(doc.id) }}
               className="inline-flex items-center gap-1 text-xs px-2.5 py-1 border border-red-100 rounded-md hover:bg-red-50 text-red-500 ml-auto">
               <Trash2 size={11} />
             </button>
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
