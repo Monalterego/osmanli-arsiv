@@ -49,7 +49,7 @@ export default function App() {
       title: result.title_tr || result.title || 'Isimsiz belge',
       title_tr: result.title_tr || '',
       title_original: result.title_original || '',
-      dept: result.dept || 'Operation Department',
+      dept: saltUrl ? saltUrl.split(' > ')[0] : (result.dept || 'Operation Department'),
       type: result.type || 'Dosya / File',
       date: result.date || '',
       url: saltUrl || '',
