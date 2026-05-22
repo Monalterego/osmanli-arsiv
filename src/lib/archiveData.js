@@ -60,7 +60,18 @@ export const ARCHIVE_STRUCTURE = [
     url: 'https://archives.saltresearch.org/handle/123456789/2511',
     description: 'Osmanli Bankasi\'nin gayrimenkulleri ve sube yapilarinа dair belge, defter ve fotograflari bir araya getirir.',
     children: [
-      { name: 'Defter ve Kitaplar', url: 'https://archives.saltresearch.org/handle/123456789/2561', children: [] },
+      {
+  name: 'Defter ve Kitaplar',
+  url: 'https://archives.saltresearch.org/handle/123456789/2561',
+  children: [
+    { name: 'Repertoire d\'immeubles et hypotheques', url: 'https://archives.saltresearch.org/handle/123456789/3433' },
+    { name: 'Registres de loyers percus', url: 'https://archives.saltresearch.org/handle/123456789/3432' },
+    { name: 'Grand livre immeubles A. Sasso - Kustendje', url: 'https://archives.saltresearch.org/handle/123456789/3324' },
+    { name: 'Immeubles Macri Keui loyers', url: 'https://archives.saltresearch.org/handle/123456789/3223' },
+    { name: 'Grand livre des immeubles', url: 'https://archives.saltresearch.org/handle/123456789/3127' },
+    { name: 'B.I.O. immeubles', url: 'https://archives.saltresearch.org/handle/123456789/3027' },
+  ]
+},
       { name: 'Fotograf Albumleri', url: 'https://archives.saltresearch.org/handle/123456789/2516', children: [] },
       {
         name: 'Fotograflar',
