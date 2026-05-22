@@ -13,7 +13,10 @@ function DocCard({ doc, onDelete, onTranslate, onExtract }) {
           <Tag size={14} className="text-blue-600" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-stone-800 leading-snug">{doc.title}</p>
+          <p className="text-sm font-medium text-stone-800 leading-snug">{doc.title_tr || doc.title}</p>
+{doc.title_original && doc.title_original !== doc.title_tr && (
+  <p className="text-xs text-stone-400 mt-0.5 italic">{doc.title_original}</p>
+)}
           <div className="flex flex-wrap gap-1.5 mt-2">
             <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">{doc.dept}</span>
             {doc.date && <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">{doc.date}</span>}

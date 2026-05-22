@@ -46,7 +46,9 @@ export default function App() {
   async function handleDocumentAnalyzed(result, saltUrl = '') {
     const doc = {
       id: generateId(),
-      title: result.title || 'Isimsiz belge',
+      title: result.title_tr || result.title || 'Isimsiz belge',
+      title_tr: result.title_tr || '',
+      title_original: result.title_original || '',
       dept: result.dept || 'Operation Department',
       type: result.type || 'Dosya / File',
       date: result.date || '',

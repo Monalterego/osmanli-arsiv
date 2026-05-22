@@ -40,7 +40,8 @@ export async function analyzeDocument(apiKey, base64Data, mimeType, context = ''
       ${context ? `Belgenin alindig klasor: ${context}` : ''} 
 Belgeyi inceleyip asagidaki JSON formatinda yanit ver. SADECE JSON yaz, baska hicbir sey yazma:
 {
-  "title": "belge basligi veya tahmini baslik",
+  "title_original": "belgedeki orijinal baslik veya ilk satirdaki metin, aynen kopyala",
+  "title_tr": "orijinal basligin Turkce cevirisi",
   "dept": "Accounting Department | Administrative Office | Issue Department | Operation Department | Ottoman Bank London | Personnel Department | Real Estates Department",
   "type": "Dosya / File | Fotograf / Photograph | Dijital belge / Digital document | Defter / Register | Belge / Document | Brosur / Brochure | Diger",
   "date": "YYYY-MM-DD veya YYYY formatinda tarih",
