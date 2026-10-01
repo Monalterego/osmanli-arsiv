@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { Loader, FileText, CheckCircle, AlertCircle, X, BookOpen } from 'lucide-react'
 import { getApiKey, saveDoc, generateId } from '../lib/storage'
-import { analyzeDocument } from '../lib/claude'
+import { analyzeDocument, analyzeDefterPage } from '../lib/claude'
 import { findBreadcrumb, ARCHIVE_STRUCTURE } from '../lib/archiveData'
 
 export default function Upload({ onDocumentAnalyzed }) {
@@ -86,20 +86,7 @@ export default function Upload({ onDocumentAnalyzed }) {
       try {
         const base64 = await fileToBase64(file)
         const context = saltMeta ? `Defter: ${defterAdi}. SALT klasoru: ${saltMeta.url}` : `Defter: ${defterAdi}`
-        const res = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-          body: JSON.stringify({
-            model: 'claude-haiku-4-5-20251001', max_tokens: 1000,
-            system: `Sen Osmanli Bankasi defter sayfalarini analiz eden bir tarih veri analistisin. SADECE JSON yaz:\n{"sayfa_no":"...","tarih":"...","taraflar":["..."],"mulk_veya_konu":"...","lokasyon":"...","tutar":"...","notlar":"...","orijinal_metin":"..."}`,
-            messages: [{ role: 'user', content: [
-              { type: 'image', source: { type: 'base64', media_type: file.type, data: base64 } },
-              { type: 'text', text: `${context}. Bu defter sayfasini analiz et.` }
-            ]}]
-          })
-        })
-        const data = await res.json()
-        const parsed = JSON.parse(data.content[0].text.replace(/```json|```/g, '').trim())
+        const parsed = await analyzeDefterPage(key, base64, file.type, context)
         setDefterRows(prev => [...prev, { dosya: file.name, ...parsed }])
       } catch (err) {
         setDefterRows(prev => [...prev, { dosya: file.name, hata: err.message }])

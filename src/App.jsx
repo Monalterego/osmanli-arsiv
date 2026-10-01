@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { BookOpen, FileText, Languages, Database, FolderOpen, Settings as SettingsIcon, Upload as UploadIcon, Notebook } from 'lucide-react'
+import { BookOpen, FileText, Languages, Database, FolderOpen, Settings as SettingsIcon, Upload as UploadIcon, Notebook, Library } from 'lucide-react'
 import Documents from './components/Documents'
 import Translate from './components/Translate'
 import Extract from './components/Extract'
@@ -7,7 +7,8 @@ import Archive from './components/Archive'
 import Settings from './components/Settings'
 import Upload from './components/Uploads'
 import TezNotlari from './components/TezNotlari'
-import { getDocs, saveDoc, generateId } from './lib/storage'
+import Literature from './components/Literature'
+import { getDocs, saveDoc, generateId, getLiterature } from './lib/storage'
 
 const NAV = [
   { id: 'yukle', label: 'Belge Yukle', icon: UploadIcon },
@@ -15,6 +16,7 @@ const NAV = [
   { id: 'ceviri', label: 'Ceviri', icon: Languages },
   { id: 'veri', label: 'Veri Cikarimi', icon: Database },
   { id: 'arsiv', label: 'Arsiv Yapisi', icon: FolderOpen },
+  { id: 'literatur', label: 'Literatur', icon: Library },
   { id: 'tez', label: 'Tez Notlari', icon: BookOpen },
   { id: 'ayarlar', label: 'Ayarlar', icon: SettingsIcon },
 ]
@@ -22,13 +24,15 @@ const NAV = [
 export default function App() {
   const [tab, setTab] = useState('yukle')
   const [docs, setDocs] = useState([])
+  const [literature, setLiterature] = useState([])
   const [loading, setLoading] = useState(true)
   const [translateText, setTranslateText] = useState('')
   const [extractText, setExtractText] = useState('')
 
   useEffect(() => {
-    getDocs().then(data => {
-      setDocs(data)
+    Promise.all([getDocs(), getLiterature()]).then(([docsData, litData]) => {
+      setDocs(docsData)
+      setLiterature(litData)
       setLoading(false)
     })
   }, [])
@@ -101,6 +105,11 @@ export default function App() {
                       {docs.length}
                     </span>
                   )}
+                  {item.id === 'literatur' && literature.length > 0 && (
+                    <span className="ml-auto text-xs px-1.5 py-0.5 rounded-full" style={{background:'rgba(127,119,221,0.2)', color:'#AFA9EC'}}>
+                      {literature.length}
+                    </span>
+                  )}
                 </button>
               )
             })}
@@ -122,6 +131,7 @@ export default function App() {
               {tab === 'ceviri' && <Translate key={translateText} initialText={translateText} />}
               {tab === 'veri' && <Extract key={extractText} initialText={extractText} />}
               {tab === 'arsiv' && <Archive />}
+              {tab === 'literatur' && <Literature items={literature} setItems={setLiterature} />}
               {tab === 'tez' && <TezNotlari />}
               {tab === 'ayarlar' && <Settings />}
             </div>

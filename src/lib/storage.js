@@ -1,6 +1,7 @@
 const DOCS_KEY = 'osmanli_arsiv_belgeler'
 const TEZ_KEY = 'osmanli_arsiv_tez_notlari'
 const API_KEY = 'osmanli_arsiv_api_key'
+const LIT_KEY = 'osmanli_arsiv_literatur'
 
 export function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2)
@@ -61,4 +62,30 @@ export async function deleteTezNotu(id) {
     const notlar = await getTezNotlari()
     localStorage.setItem(TEZ_KEY, JSON.stringify(notlar.filter(n => n.id !== id)))
   } catch (e) { console.error('deleteTezNotu error:', e) }
+}
+
+// Literatur (makale / tez / kitap)
+export async function getLiterature() {
+  try {
+    const raw = localStorage.getItem(LIT_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch { return [] }
+}
+
+export async function saveLiteratureItem(item) {
+  try {
+    const items = await getLiterature()
+    const existing = items.findIndex(i => i.id === item.id)
+    const withDate = { ...item, created_at: item.created_at || new Date().toISOString() }
+    if (existing >= 0) items[existing] = withDate
+    else items.unshift(withDate)
+    localStorage.setItem(LIT_KEY, JSON.stringify(items))
+  } catch (e) { console.error('saveLiteratureItem error:', e) }
+}
+
+export async function deleteLiteratureItem(id) {
+  try {
+    const items = await getLiterature()
+    localStorage.setItem(LIT_KEY, JSON.stringify(items.filter(i => i.id !== id)))
+  } catch (e) { console.error('deleteLiteratureItem error:', e) }
 }

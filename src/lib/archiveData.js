@@ -673,6 +673,16 @@ export const DOC_TYPES = [
   'Diger',
 ]
 
+export const LITERATURE_TYPES = [
+  'Makale',
+  'Yuksek Lisans Tezi',
+  'Doktora Tezi',
+  'Kitap',
+  'Kitap Bolumu',
+  'Rapor',
+  'Diger',
+]
+
 export const THESIS_TAGS = [
   'kredi', 'muhabere', 'bilanco', 'doviz', 'borc', 'faiz',
   'vergi', 'sube', 'London', 'Paris', 'Istanbul', 'Beyrut',
